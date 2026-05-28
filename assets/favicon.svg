@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Cadre arrondi sombre (s'intègre avec le thème + crée les séparations) -->
+  <rect width="32" height="32" rx="4" fill="#0d0d11"/>
+  <!-- 3x3 grille de stickers (face d'un Rubik's cube mélangée) -->
+  <g>
+    <!-- Rangée 1 -->
+    <rect x="3"  y="3"  width="8" height="8" rx="1.2" fill="#ffd500"/>
+    <rect x="12" y="3"  width="8" height="8" rx="1.2" fill="#f6f6f6"/>
+    <rect x="21" y="3"  width="8" height="8" rx="1.2" fill="#c41e3a"/>
+    <!-- Rangée 2 -->
+    <rect x="3"  y="12" width="8" height="8" rx="1.2" fill="#ff7f1f"/>
+    <rect x="12" y="12" width="8" height="8" rx="1.2" fill="#1bb55c"/>
+    <rect x="21" y="12" width="8" height="8" rx="1.2" fill="#3b6df0"/>
+    <!-- Rangée 3 -->
+    <rect x="3"  y="21" width="8" height="8" rx="1.2" fill="#c41e3a"/>
+    <rect x="12" y="21" width="8" height="8" rx="1.2" fill="#ffd500"/>
+    <rect x="21" y="21" width="8" height="8" rx="1.2" fill="#f6f6f6"/>
+  </g>
+</svg>
