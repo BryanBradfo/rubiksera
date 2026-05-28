@@ -1,0 +1,26 @@
+# Screenshots & test artefacts
+*.png
+.playwright-mcp/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (au cas où on ajoute des dépendances dev plus tard)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Vercel
+.vercel/
+
+# Build outputs (futurs)
+dist/
+build/

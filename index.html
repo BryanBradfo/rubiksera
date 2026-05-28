@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="ui.docTitle">Solve a Rubik's cube — Victor Colin's method</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <h1 data-i18n="ui.title">…</h1>
+    <p class="subtitle" data-i18n="ui.subtitle">…</p>
+    <div class="lang-switcher" role="group" aria-label="Language">
+      <button class="lang-btn" data-lang="fr" type="button">FR</button>
+      <button class="lang-btn" data-lang="en" type="button">EN</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="cube-pane">
+      <div id="cube-canvas-container"></div>
+      <p class="cube-hint" data-i18n="ui.cubeHint">…</p>
+    </section>
+
+    <aside class="text-pane">
+      <div class="step-header">
+        <span class="step-counter">
+          <span data-i18n="ui.stepLabel">Step</span>
+          <span id="step-num">1</span> / 8
+        </span>
+        <h2 id="step-title">…</h2>
+      </div>
+
+      <div id="step-body" class="step-body"></div>
+
+      <div class="formula-block">
+        <p class="formula-label" data-i18n="ui.movesLabel">…</p>
+        <div id="moves-list" class="moves-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <nav class="controls">
+    <button id="btn-prev" class="ctrl-btn" data-i18n="ui.btnPrev">◀ …</button>
+    <button id="btn-play" class="ctrl-btn ctrl-play" data-i18n="ui.btnPlay">▶ …</button>
+    <button id="btn-next" class="ctrl-btn" data-i18n="ui.btnNext">… ▶</button>
+    <div id="timeline" class="timeline"></div>
+    <div class="speed-control">
+      <label for="speed-slider" class="speed-label">
+        <span data-i18n="ui.speedLabel">…</span> <span id="speed-value">1.0×</span>
+      </label>
+      <input id="speed-slider" type="range" min="0.3" max="2" step="0.1" value="1.0" />
+    </div>
+    <button id="btn-reset" class="ctrl-btn ctrl-reset" data-i18n="ui.btnReset">↻ …</button>
+  </nav>
+
+  <footer class="credit">
+    <p id="credit-line">…</p>
+    <p class="credit-thanks" data-i18n="ui.creditThanks">…</p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
