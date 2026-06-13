@@ -8,7 +8,7 @@ Victor Colin's beginner method**, with synchronized text in French or English.
 
 ## Demo
 
-🎬 Live demo: _coming soon (Vercel deploy pending)_
+🎬 Live demo: https://rubiksera.bryanbradfo.me/
 📖 Original tutorial (in French): https://youtu.be/Leml4U4D1r8
 
 ## Features
