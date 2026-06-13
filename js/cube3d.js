@@ -1,11 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 // ─── Palette des stickers du cube ───────────────────────────────────────
-// TODO(toi) : à toi de jouer ! Tu peux remplacer ces couleurs par :
-//   - les couleurs Rubik officielles (très saturées, voir code commenté)
-//   - une palette plus douce / pastel
-//   - les couleurs de ton équipe favorite, qui sait
 // Convention : blanc = bas, jaune = haut, vert = avant, bleu = arrière,
 //              rouge = droite, orange = gauche.
 const STICKERS = {
@@ -16,10 +14,21 @@ const STICKERS = {
   F: 0x1bb55c,  // front = vert
   B: 0x3b6df0,  // back  = bleu
 };
-const INNER = 0x111114;  // couleur des faces internes (cachées) du cubie
+const PLASTIC = 0x101013;  // corps en plastique noir mat des cubies
 
 const PI_2 = Math.PI / 2;
 const EPS = 1e-4;
+
+// Orientation d'un sticker pour chaque face extérieure : position du centre
+// (sur la surface du cubie) + rotation pour coller la tuile à plat.
+const FACE_PLACEMENT = {
+  R: { axis: 'x', sign:  1, pos: [ 0.49, 0, 0], rot: [0,  PI_2, 0] },
+  L: { axis: 'x', sign: -1, pos: [-0.49, 0, 0], rot: [0, -PI_2, 0] },
+  U: { axis: 'y', sign:  1, pos: [0,  0.49, 0], rot: [-PI_2, 0, 0] },
+  D: { axis: 'y', sign: -1, pos: [0, -0.49, 0], rot: [ PI_2, 0, 0] },
+  F: { axis: 'z', sign:  1, pos: [0, 0,  0.49], rot: [0, 0, 0] },
+  B: { axis: 'z', sign: -1, pos: [0, 0, -0.49], rot: [0, PI_2 * 2, 0] },
+};
 
 // ─── Initialisation Three.js (scène, caméra, lumière, contrôles) ────────
 export function createCube3D(container) {
@@ -43,16 +52,28 @@ export function createCube3D(container) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.28;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.appendChild(renderer.domElement);
 
-  // Éclairage doux : ambient + une directionnelle pour donner du relief
-  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.55);
-  dir.position.set(6, 8, 4);
-  scene.add(dir);
-  const dir2 = new THREE.DirectionalLight(0xffffff, 0.25);
-  dir2.position.set(-5, -3, -4);
-  scene.add(dir2);
+  // ─── Éclairage photographique ───────────────────────────────────────
+  // Lumière d'environnement (IBL) générée depuis une "pièce" virtuelle :
+  // donne aux tuiles brillantes des reflets doux et réalistes, bien plus
+  // élégant qu'un simple ambient plat.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  // Lumière clé vive pour un reflet spéculaire net + un léger contre-jour + un rim.
+  const key = new THREE.DirectionalLight(0xffffff, 2.4);
+  key.position.set(5, 9, 7);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xfff2e0, 0.45);
+  fill.position.set(-6, -4, -5);
+  scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.8);
+  rim.position.set(-4, 6, -6);
+  scene.add(rim);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -61,40 +82,69 @@ export function createCube3D(container) {
   controls.enablePan = false;
   controls.minDistance = 5;
   controls.maxDistance = 18;
+  // Rotation lente au repos pour montrer la 3D ; coupée dès qu'on interagit.
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.55;
+  let lastInteract = -Infinity;
+  controls.addEventListener('start', () => { lastInteract = performance.now(); });
+  controls.addEventListener('end',   () => { lastInteract = performance.now(); });
 
-  // ─── Construction du cube : 27 cubies ───────────────────────────────
+  // ─── Construction du cube : 27 cubies plastique + tuiles stickers ────
   const cubies = [];
   const cubeGroup = new THREE.Group();
   scene.add(cubeGroup);
 
-  const SIZE = 0.96;             // taille d'un cubie (gap de 0.04 entre eux)
-  const geom = new THREE.BoxGeometry(SIZE, SIZE, SIZE);
+  const SIZE = 0.97;             // taille d'un cubie (gap de 0.03 entre eux)
+  const bodyGeom = new RoundedBoxGeometry(SIZE, SIZE, SIZE, 5, 0.13);
+  // Tuile : carré arrondi bombé, posé sur une face (épaisseur en Z), légèrement
+  // proéminent pour l'effet "sticker en relief".
+  const tileGeom = new RoundedBoxGeometry(0.76, 0.76, 0.09, 4, 0.15);
+  const bodyMat = new THREE.MeshPhysicalMaterial({
+    color: PLASTIC, roughness: 0.5, metalness: 0,
+    clearcoat: 0.4, clearcoatRoughness: 0.45,
+  });
 
   for (let x = -1; x <= 1; x++) {
     for (let y = -1; y <= 1; y++) {
       for (let z = -1; z <= 1; z++) {
-        // 6 matériaux : ordre Three.js = +X, -X, +Y, -Y, +Z, -Z
-        const mats = [
-          new THREE.MeshLambertMaterial({ color: x ===  1 ? STICKERS.R : INNER }),
-          new THREE.MeshLambertMaterial({ color: x === -1 ? STICKERS.L : INNER }),
-          new THREE.MeshLambertMaterial({ color: y ===  1 ? STICKERS.U : INNER }),
-          new THREE.MeshLambertMaterial({ color: y === -1 ? STICKERS.D : INNER }),
-          new THREE.MeshLambertMaterial({ color: z ===  1 ? STICKERS.F : INNER }),
-          new THREE.MeshLambertMaterial({ color: z === -1 ? STICKERS.B : INNER }),
-        ];
-        const cubie = new THREE.Mesh(geom, mats);
+        const cubie = new THREE.Mesh(bodyGeom, bodyMat);
         cubie.position.set(x, y, z);
         cubeGroup.add(cubie);
         cubies.push(cubie);
 
-        // Léger contour foncé sur chaque arête de cubie : on ajoute
-        // une LineSegments par-dessus la box pour bien voir les stickers.
-        const edges = new THREE.EdgesGeometry(geom);
-        const line = new THREE.LineSegments(
-          edges,
-          new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 })
-        );
-        cubie.add(line);
+        // Une tuile colorée pour chaque face extérieure de ce cubie.
+        const faces = [];
+        if (x ===  1) faces.push('R');
+        if (x === -1) faces.push('L');
+        if (y ===  1) faces.push('U');
+        if (y === -1) faces.push('D');
+        if (z ===  1) faces.push('F');
+        if (z === -1) faces.push('B');
+
+        for (const f of faces) {
+          const p = FACE_PLACEMENT[f];
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: STICKERS[f], roughness: 0.17, metalness: 0,
+            clearcoat: 1.0, clearcoatRoughness: 0.1, envMapIntensity: 1.3,
+          });
+          const tile = new THREE.Mesh(tileGeom, mat);
+          tile.position.set(...p.pos);
+          tile.rotation.set(...p.rot);
+          tile.userData.baseColor = new THREE.Color(STICKERS[f]);
+          tile.userData.isSticker = true;
+          cubie.add(tile);
+        }
+      }
+    }
+  }
+
+  // Met en valeur (glow) les stickers d'une liste de cubies, intensité 0..1.
+  function setLayerGlow(movingCubies, intensity) {
+    for (const c of movingCubies) {
+      for (const child of c.children) {
+        if (!child.userData.isSticker) continue;
+        child.material.emissive.copy(child.userData.baseColor);
+        child.material.emissiveIntensity = intensity;
       }
     }
   }
@@ -110,17 +160,21 @@ export function createCube3D(container) {
   const ro = new ResizeObserver(onResize);
   ro.observe(container);
 
+  // ─── État interne d'animation ───────────────────────────────────────
+  let busy = Promise.resolve();
+  let cancelled = false;
+  let animating = false;   // vrai pendant qu'une séquence de moves joue
+
   // ─── Boucle de rendu ────────────────────────────────────────────────
   function animate() {
     requestAnimationFrame(animate);
+    // Auto-rotation seulement au repos : pas pendant un move, et pas dans les
+    // 4 s qui suivent une interaction utilisateur.
+    controls.autoRotate = !animating && (performance.now() - lastInteract > 4000);
     controls.update();
     renderer.render(scene, camera);
   }
   animate();
-
-  // ─── État interne d'animation ───────────────────────────────────────
-  let busy = Promise.resolve();
-  let cancelled = false;
 
   // Rotation d'une couche : axis ∈ 'x'|'y'|'z', layer ∈ -1|0|1,
   //                        angle = ±π/2 ou ±π (pour les moves « 2 »)
@@ -142,6 +196,8 @@ export function createCube3D(container) {
         const t = Math.min(1, (now - start) / durationMs);
         const eased = easeInOutQuad(t);
         pivot.rotation[axis] = angle * eased;
+        // Glow de la couche en mouvement : monte puis redescend (pic au milieu).
+        setLayerGlow(moving, Math.sin(t * Math.PI) * 0.4);
         if (t < 1) {
           requestAnimationFrame(tick);
         } else {
@@ -150,6 +206,7 @@ export function createCube3D(container) {
       }
       function finish() {
         pivot.rotation[axis] = angle;
+        setLayerGlow(moving, 0);   // éteint le glow
         // re-attache les cubies à la scène (en gardant la transform monde),
         // puis snap positions + rotations pour éviter la dérive numérique.
         moving.forEach(c => {
@@ -188,13 +245,18 @@ export function createCube3D(container) {
   function applySequence(moves, durationMs = 280, onMoveStart = null) {
     busy = busy.then(async () => {
       cancelled = false;
-      for (let i = 0; i < moves.length; i++) {
-        if (cancelled) break;
-        if (onMoveStart) onMoveStart(i, moves[i]);
-        const { axis, layer, angle } = parseMove(moves[i]);
-        // Un move "2" (demi-tour) est animé plus long pour rester lisible.
-        const dur = Math.abs(angle) > PI_2 + EPS ? durationMs * 1.6 : durationMs;
-        await rotateLayer(axis, layer, angle, dur);
+      animating = true;
+      try {
+        for (let i = 0; i < moves.length; i++) {
+          if (cancelled) break;
+          if (onMoveStart) onMoveStart(i, moves[i]);
+          const { axis, layer, angle } = parseMove(moves[i]);
+          // Un move "2" (demi-tour) est animé plus long pour rester lisible.
+          const dur = Math.abs(angle) > PI_2 + EPS ? durationMs * 1.6 : durationMs;
+          await rotateLayer(axis, layer, angle, dur);
+        }
+      } finally {
+        animating = false;
       }
     });
     return busy;
@@ -242,6 +304,8 @@ export function createCube3D(container) {
       const from = camera.position.clone();
       const to = target.clone();
       controls.enabled = false;
+      controls.autoRotate = false;       // pas d'auto-rotation pendant la bascule
+      lastInteract = performance.now();  // garde l'auto-rotation coupée le temps de la bascule
       function tick(now) {
         const t = Math.min(1, (now - start) / durationMs);
         const eased = easeInOutQuad(t);
@@ -253,6 +317,7 @@ export function createCube3D(container) {
           // Repositionner la cible des OrbitControls et réactiver
           controls.target.set(0, 0, 0);
           controls.enabled = true;
+          lastInteract = performance.now();   // laisse 4 s avant de re-spinner
           controls.update();
           resolve();
         }
