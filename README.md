@@ -8,7 +8,7 @@ Victor Colin's beginner method**, with synchronized text in French or English.
 
 ## Demo
 
-🎬 Live demo: _(à compléter après déploiement Vercel)_
+🎬 Live demo: _coming soon (Vercel deploy pending)_
 📖 Original tutorial (in French): https://youtu.be/Leml4U4D1r8
 
 ## Features
@@ -45,6 +45,7 @@ from CDN via importmap.
 .
 ├── index.html
 ├── assets/
+│   ├── favicon.svg           # 3x3 cube-face favicon (the 6 colours)
 │   └── rubiks.pdf            # Original methodology sheet by Victor Colin
 ├── css/
 │   └── style.css
