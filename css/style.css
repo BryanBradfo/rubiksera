@@ -140,10 +140,10 @@ code {
 /* ─── Main layout ──────────────────────────────────────────────────────── */
 .layout {
   display: grid;
-  grid-template-columns: 1.08fr 1fr;
+  grid-template-columns: 0.9fr 1.35fr;   /* cube to the left, wider text pane */
   gap: 30px;
   padding: 8px 40px 28px;
-  max-width: 1320px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -295,7 +295,7 @@ code {
 }
 .moves-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 9px;
 }
 
