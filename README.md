@@ -1,4 +1,4 @@
-# rubiksera — Rubik's Cube, step by step
+# rubiksera · Rubik's Cube, step by step
 
 Interactive 3D Rubik's Cube visualization that walks through the **8 steps of
 Victor Colin's beginner method**, with synchronized text in French or English.
@@ -8,19 +8,25 @@ Victor Colin's beginner method**, with synchronized text in French or English.
 
 ## Demo
 
-🎬 Live demo: _(à compléter après déploiement Vercel)_
+🎬 Live demo: _coming soon (Vercel deploy pending)_
 📖 Original tutorial (in French): https://youtu.be/Leml4U4D1r8
 
 ## Features
 
-- 🧊 **Real 3D cube** rendered with Three.js (drag to rotate, scroll to zoom)
-- 🎬 **Step-by-step playback** with play/pause/prev/next/timeline controls
-- 🎚 **Speed slider** (0.3×–2×) with localStorage persistence
+- 🧊 **Realistic 3D cube** (Three.js): rounded glossy cubies, studio lighting,
+  a soft contact shadow and a gentle idle rotation (drag to rotate, scroll to zoom)
+- 🎯 **3D move cards**: each move is a mini isometric cube with the turning layer
+  shown in its real colour and a rotation arrow, plus the face and direction in
+  plain language (clockwise / counter-clockwise / half turn). The compact notation
+  (`R2`, `F'`, ...) is kept as a small badge so you learn it without depending on it.
+- 🎨 **Light editorial design** (warm paper, serif display type, hairline structure)
+- 🎬 **Step-by-step playback** with play/pause/prev/next/timeline controls; the active
+  move card highlights and scrolls into view as the cube turns
+- 🎚 **Speed slider** (0.3× to 2×) with localStorage persistence
 - 🌍 **i18n** (FR / EN), auto-detected from browser language, switchable on the fly
-- 📐 **SVG move icons** showing isometric mini-cubes with rotation arrows
-- 🤖 **Custom LBL solver** (`js/lblSolver.js`) — each step's moves are
+- 🤖 **Custom LBL solver** (`js/lblSolver.js`): each step's moves are
   computed to **really do what the text says** (not just arbitrary moves)
-- 📸 **Camera flip** at step 4 — exactly as the PDF says ("put white face down")
+- 📸 **Camera flip** at step 4, exactly as the PDF says ("put white face down")
 
 ## How to run locally
 
@@ -30,7 +36,7 @@ python3 -m http.server 8000
 
 Then open http://localhost:8000
 
-No build step, no dependencies — pure HTML + CSS + ES modules. Three.js loaded
+No build step, no dependencies. Pure HTML + CSS + ES modules. Three.js loaded
 from CDN via importmap.
 
 ## Project structure
@@ -39,13 +45,14 @@ from CDN via importmap.
 .
 ├── index.html
 ├── assets/
+│   ├── favicon.svg           # 3x3 cube-face favicon (the 6 colours)
 │   └── rubiks.pdf            # Original methodology sheet by Victor Colin
 ├── css/
 │   └── style.css
 ├── js/
 │   ├── main.js               # UI orchestration
 │   ├── cube3d.js             # Three.js 3D rendering + face rotation animation
-│   ├── moveIcons.js          # SVG generator for move icons
+│   ├── moveIcons.js          # SVG generator for the 3D move cards
 │   ├── i18n.js               # Mini i18n engine
 │   ├── steps.js              # Step data (titles/bodies from i18n, moves precomputed)
 │   ├── cubeEngine.js         # Facelet model + 18 move permutations (engine)
@@ -71,7 +78,7 @@ Copy the output into `PRECOMPUTED_STEPS` in `js/main.js`.
 
 ## Credit
 
-Method and methodology sheet by **Victor Colin** —
+Method and methodology sheet by **Victor Colin**.
 [YouTube tutorial](https://youtu.be/Leml4U4D1r8) (in French).
 This site faithfully reproduces the text and formulas of `rubiks.pdf`.
 

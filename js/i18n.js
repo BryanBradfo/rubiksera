@@ -1,12 +1,12 @@
 // ─── Moteur de traduction (i18n) ────────────────────────────────────────
 //
 // API :
-//   await init()             — charge la langue (localStorage > navigator)
-//   t(path)                  — résout 'ui.btnPlay' ou 'moves.right'
-//   tSteps()                 — renvoie le tableau steps[] de la langue courante
-//   getLang()                — code de langue courant ('fr' | 'en')
-//   getSupportedLangs()      — liste des codes supportés
-//   await setLang(lang)      — change la langue + persiste + déclenche 'langChanged'
+//   await init()             - charge la langue (localStorage > navigator)
+//   t(path)                  - résout 'ui.btnPlay' ou 'moves.right'
+//   tSteps()                 - renvoie le tableau steps[] de la langue courante
+//   getLang()                - code de langue courant ('fr' | 'en')
+//   getSupportedLangs()      - liste des codes supportés
+//   await setLang(lang)      - change la langue + persiste + déclenche 'langChanged'
 //
 // Évite l'usage de eval ou de template literals dynamiques : utilise les chemins
 // pointés et un fallback sûr si la clé n'existe pas.
