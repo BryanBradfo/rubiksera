@@ -80,7 +80,7 @@ export function createCube3D(container) {
   // donne aux tuiles brillantes des reflets doux et réalistes.
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.32;     // peu de fill → modelé contrasté
+  scene.environmentIntensity = 0.4;
 
   // Softbox : reflet doux et large sur les tuiles brillantes (highlight studio).
   RectAreaLightUniformsLib.init();
@@ -91,11 +91,16 @@ export function createCube3D(container) {
 
   // Clé dominante très directionnelle → une face vive, les autres plus
   // sombres : c'est ce modelé qui donne le relief "photographié".
-  const key = new THREE.DirectionalLight(0xfff6ea, 2.8);
+  const key = new THREE.DirectionalLight(0xfff6ea, 2.6);
   key.position.set(6, 10, 5);
   scene.add(key);
-  // Fill ambiant très faible, juste pour ne pas boucher les ombres.
-  const fill = new THREE.DirectionalLight(0xdfe6ff, 0.22);
+  // Ambiance hémisphérique : éclaire TOUTES les faces, y compris celle du
+  // dessous (la face blanche vue aux étapes 1-3) qui sinon resterait noire,
+  // car toutes les autres lumières viennent d'en haut.
+  const hemi = new THREE.HemisphereLight(0xfffaf0, 0xeae2d4, 0.85);
+  scene.add(hemi);
+  // Petit fill latéral chaud pour adoucir les ombres.
+  const fill = new THREE.DirectionalLight(0xffe9d2, 0.2);
   fill.position.set(-7, -2, -4);
   scene.add(fill);
 
