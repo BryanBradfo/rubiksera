@@ -13,11 +13,17 @@ Victor Colin's beginner method**, with synchronized text in French or English.
 
 ## Features
 
-- 🧊 **Real 3D cube** rendered with Three.js (drag to rotate, scroll to zoom)
-- 🎬 **Step-by-step playback** with play/pause/prev/next/timeline controls
+- 🧊 **Realistic 3D cube** (Three.js): rounded glossy cubies, studio lighting,
+  a soft contact shadow and a gentle idle rotation (drag to rotate, scroll to zoom)
+- 🎯 **3D move cards**: each move is a mini isometric cube with the turning layer
+  shown in its real colour and a rotation arrow, plus the face and direction in
+  plain language (clockwise / counter-clockwise / half turn). The compact notation
+  (`R2`, `F'`, ...) is kept as a small badge so you learn it without depending on it.
+- 🎨 **Light editorial design** (warm paper, serif display type, hairline structure)
+- 🎬 **Step-by-step playback** with play/pause/prev/next/timeline controls; the active
+  move card highlights and scrolls into view as the cube turns
 - 🎚 **Speed slider** (0.3× to 2×) with localStorage persistence
 - 🌍 **i18n** (FR / EN), auto-detected from browser language, switchable on the fly
-- 📐 **SVG move icons** showing isometric mini-cubes with rotation arrows
 - 🤖 **Custom LBL solver** (`js/lblSolver.js`): each step's moves are
   computed to **really do what the text says** (not just arbitrary moves)
 - 📸 **Camera flip** at step 4, exactly as the PDF says ("put white face down")
@@ -45,7 +51,7 @@ from CDN via importmap.
 ├── js/
 │   ├── main.js               # UI orchestration
 │   ├── cube3d.js             # Three.js 3D rendering + face rotation animation
-│   ├── moveIcons.js          # SVG generator for move icons
+│   ├── moveIcons.js          # SVG generator for the 3D move cards
 │   ├── i18n.js               # Mini i18n engine
 │   ├── steps.js              # Step data (titles/bodies from i18n, moves precomputed)
 │   ├── cubeEngine.js         # Facelet model + 18 move permutations (engine)
