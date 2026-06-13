@@ -87,4 +87,4 @@ This site faithfully reproduces the text and formulas of `rubiks.pdf`.
 ## License
 
 This project is for educational purposes. The methodology and PDF belong to
-Victor Colin. Code is MIT-licensed.
+Victor Colin. The code is released under the [MIT License](LICENSE).
