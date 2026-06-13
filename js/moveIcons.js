@@ -1,172 +1,201 @@
-// ─── Générateur de schémas SVG pour les mouvements du Rubik's cube ──────
+// ─── Cartes d'instruction avec mini-cube 3D pour chaque mouvement ────────
 //
-// Pour chaque mouvement (R, R', R2, U, U', U2, F, F', F2, L, L', L2, D, D', D2, B, B', B2),
-// on génère un mini-cube isométrique (3 faces visibles : Haut, Avant, Droite) avec :
-//   - la face concernée par la rotation tintée en jaune accent
-//   - une flèche courbe sur cette face indiquant le sens (horaire / antihoraire / 180°)
+// Chaque mouvement (R, R', R2 … B2) est illustré par un petit cube en
+// projection isométrique (on voit 3 faces : haut, avant, droite) :
+//   - la COUCHE qui tourne est mise en couleur (la vraie couleur de la face
+//     sur le cube : droite = rouge, haut = jaune, …)
+//   - une flèche de rotation en perspective 3D montre le sens (horaire,
+//     antihoraire, ou demi-tour)
 //
-// Convention de la projection isométrique utilisée ici (vue d'un cube avec
-// face avant un peu décalée vers le bas-droite) :
-//   - Face HAUT  = losange en haut
-//   - Face AVANT = losange en bas-gauche
-//   - Face DROITE = losange en bas-droite
-//   - Face BAS / GAUCHE / ARRIERE = invisibles → représentés par un cadre grisé
+// À côté : la face nommée en toutes lettres + le sens (i18n) + la notation
+// compacte (R2) en petit badge.
 //
-// Couleurs : la face visible concernée est en accent jaune ; les autres
-// faces visibles sont en gris clair pour ne pas distraire.
+// Plutôt que de dessiner les 18 mouvements à la main, on PROJETTE de vraies
+// coordonnées 3D en isométrique. Un mouvement se résume alors à : quelle
+// couche colorer + autour de quel axe enrouler la flèche.
 
 import { t } from './i18n.js';
 
-const ACCENT = '#ffd500';
-const FACE_LIGHT = '#3a3a44';
-const FACE_DARK = '#252530';
-const STROKE = '#0d0d11';
-const ARROW = '#000';
-const HIDDEN_FACE = '#1f1f26';
+// Couleurs réelles des stickers (synchro avec js/cube3d.js).
+const FACE_COLOR = {
+  U: '#ffd500', D: '#f6f6f6', R: '#c41e3a',
+  L: '#ff7f1f', F: '#1bb55c', B: '#3b6df0',
+};
+const NEUTRAL    = '#d3cab5';  // stickers non concernés (assez foncé pour que le blanc ressorte)
+const STICKER_LN = '#2c2820';  // contour des stickers
+const ARROW_DARK = '#211d18';
+const ARROW_HALO = '#fffdf8';
 
-// Coordonnées canoniques (viewBox 100×100) des 4 sommets d'un cube isométrique
-// dont le centre est à (50, 52). On dessine un cube unitaire et on indique
-// laquelle de ses 3 faces visibles est active.
-const P = {
-  topBack:    [50, 14],
-  topLeft:    [16, 32],
-  topRight:   [84, 32],
-  topFront:   [50, 50],     // sommet où top, front, right se rencontrent
-  bottomLeft: [16, 70],
-  bottomRight:[84, 70],
-  bottomFront:[50, 88],
+// Pour chaque face : l'axe tourné, le signe de la couche, et le signe de la
+// rotation 3D d'un quart de tour « simple » (convention identique à cube3d.js :
+// R,U,F tournent de -90° ; L,D,B de +90° autour de l'axe + correspondant).
+const MOVE = {
+  R: { axis: 'x', layer:  1, rot: -1 },
+  L: { axis: 'x', layer: -1, rot: +1 },
+  U: { axis: 'y', layer:  1, rot: -1 },
+  D: { axis: 'y', layer: -1, rot: +1 },
+  F: { axis: 'z', layer:  1, rot: -1 },
+  B: { axis: 'z', layer: -1, rot: +1 },
 };
 
-function pathFromPoints(points) {
-  return 'M ' + points.map(p => p.join(' ')).join(' L ') + ' Z';
+// ─── Projection isométrique 3D → 2D ──────────────────────────────────────
+const COS30 = Math.cos(Math.PI / 6);
+const SIN30 = 0.5;
+const SCALE = 8.2;
+const CX = 32, CY = 33;   // centre dans un viewBox 64×64
+
+function project(x, y, z) {
+  const sx = (x - z) * COS30;
+  const sy = (x + z) * SIN30 - y;
+  return [CX + sx * SCALE, CY + sy * SCALE];
+}
+const fmt = ([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+
+// Un point sur le cercle de rotation autour d'un axe, à la profondeur `plane`.
+function circlePoint(axis, plane, r, t) {
+  const c = r * Math.cos(t), s = r * Math.sin(t);
+  if (axis === 'x') return [plane, c, s];
+  if (axis === 'y') return [c, plane, s];
+  return [c, s, plane];               // axis === 'z'
 }
 
-// Polygones des 3 faces visibles
-const FACE_PATHS = {
-  U: pathFromPoints([P.topBack,  P.topRight, P.topFront, P.topLeft]),
-  F: pathFromPoints([P.topLeft,  P.topFront, P.bottomFront, P.bottomLeft]),
-  R: pathFromPoints([P.topFront, P.topRight, P.bottomRight, P.bottomFront]),
-};
+// ─── Les 3 faces visibles, en stickers 3×3 ───────────────────────────────
+// Chaque face est décrite par : la coord fixe, et comment varient les 2
+// autres. On renvoie, pour chaque sticker, ses coords cubies (cx,cy,cz) et le
+// quadrilatère projeté.
+function faceStickers(face) {
+  const out = [];
+  for (let a = -1; a <= 1; a++) {
+    for (let b = -1; b <= 1; b++) {
+      let cx, cy, cz, corners;
+      const lo = -0.5, hi = 0.5;
+      if (face === 'U') {        // y = 1.5, varie x (a) et z (b)
+        cx = a; cy = 1; cz = b;
+        corners = [
+          [a + lo, 1.5, b + lo], [a + hi, 1.5, b + lo],
+          [a + hi, 1.5, b + hi], [a + lo, 1.5, b + hi],
+        ];
+      } else if (face === 'R') { // x = 1.5, varie y (a) et z (b)
+        cx = 1; cy = a; cz = b;
+        corners = [
+          [1.5, a + lo, b + lo], [1.5, a + hi, b + lo],
+          [1.5, a + hi, b + hi], [1.5, a + lo, b + hi],
+        ];
+      } else {                   // F : z = 1.5, varie x (a) et y (b)
+        cx = a; cy = b; cz = 1;
+        corners = [
+          [a + lo, b + lo, 1.5], [a + hi, b + lo, 1.5],
+          [a + hi, b + hi, 1.5], [a + lo, b + hi, 1.5],
+        ];
+      }
+      out.push({ cx, cy, cz, corners });
+    }
+  }
+  return out;
+}
 
-// Pour les faces cachées (D, L, B), on accroche un petit indicateur sur la
-// face opposée visible avec une mention textuelle. Décision pragmatique :
-// la rotation se fait quand même côté caché, mais la flèche peut être dessinée
-// sur la face opposée avec un sens visuellement cohérent.
-//
-// Mapping : à chaque face de rotation, on associe :
-//  - quelle face visible "représente" la rotation (souvent l'opposée)
-//  - le sens correctif éventuel de la flèche (car vue depuis la face opposée,
-//    le sens de rotation est inversé)
-// labelKey est utilisé pour la traduction (i18n.t('moves.<labelKey>'))
-const FACE_INFO = {
-  R: { onFace: 'R', labelKey: 'right', invertArrow: false, hiddenFace: false },
-  L: { onFace: 'R', labelKey: 'left',  invertArrow: true,  hiddenFace: true  },
-  U: { onFace: 'U', labelKey: 'up',    invertArrow: false, hiddenFace: false },
-  D: { onFace: 'U', labelKey: 'down',  invertArrow: true,  hiddenFace: true  },
-  F: { onFace: 'F', labelKey: 'front', invertArrow: false, hiddenFace: false },
-  B: { onFace: 'F', labelKey: 'back',  invertArrow: true,  hiddenFace: true  },
-};
+// Un sticker appartient-il à la couche en rotation ?
+function inLayer(s, axis, layer) {
+  const coord = axis === 'x' ? s.cx : axis === 'y' ? s.cy : s.cz;
+  return coord === layer;
+}
 
-// Flèche courbe sur une face, sens horaire / antihoraire / 180°.
-// Pour rester simple : on dessine un demi-cercle (ou cercle complet pour le 180°)
-// avec une pointe de flèche à une extrémité.
-function arrowOnFace(face, direction /* +1 = cw, -1 = ccw, 2 = 180 */) {
-  // centre de la face (moyenne des 4 sommets du polygone)
-  const cx = { U: 50, F: 33, R: 67 }[face];
-  const cy = { U: 32, F: 60, R: 60 }[face];
-  // rayon adapté à la taille du losange (les losanges sont ~34 large)
-  const r = 12;
+// ─── Flèche de rotation en perspective ───────────────────────────────────
+function arrowHead(px, py, ang, size) {
+  const tip = [px + size * Math.cos(ang), py + size * Math.sin(ang)];
+  const b1 = [px + size * 0.85 * Math.cos(ang + 2.5), py + size * 0.85 * Math.sin(ang + 2.5)];
+  const b2 = [px + size * 0.85 * Math.cos(ang - 2.5), py + size * 0.85 * Math.sin(ang - 2.5)];
+  return `${fmt(tip)} ${fmt(b1)} ${fmt(b2)}`;
+}
 
-  if (direction === 2) {
-    // 180° : on dessine un cercle complet avec une flèche à 12h
-    return `
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ARROW}" stroke-width="2.6" stroke-linecap="round"/>
-      <polygon points="${cx + r - 4},${cy - 5} ${cx + r + 4},${cy} ${cx + r - 4},${cy + 5}" fill="${ARROW}"/>
-      <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="10" font-weight="700" fill="${ARROW}">180°</text>
-    `;
+// Angle de départ de l'arc par axe (pour placer joliment l'ouverture).
+const ARC_START = { x: -40, y: 150, z: 210 };
+
+function rotationArrow(axis, layer, rotSign, half) {
+  const r = 1.15;
+  const plane = layer * 1.6;                  // juste au-dessus de la face
+  const spanDeg = half ? 180 : 265;
+  const span = (spanDeg * Math.PI) / 180;
+  const t0 = (ARC_START[axis] * Math.PI) / 180;
+  const dir = rotSign;
+  const N = 28;
+
+  const pts = [];
+  for (let i = 0; i <= N; i++) {
+    const t = t0 + dir * span * (i / N);
+    pts.push(project(...circlePoint(axis, plane, r, t)));
+  }
+  const d = 'M ' + pts.map(fmt).join(' L ');
+
+  // pointe à la fin, orientée selon la tangente
+  const a = pts[N], b = pts[N - 1];
+  const ang = Math.atan2(a[1] - b[1], a[0] - b[0]);
+  let heads = `<polygon points="${arrowHead(a[0], a[1], ang, 3.6)}"
+                 fill="${ARROW_DARK}" stroke="${ARROW_HALO}" stroke-width="0.6"/>`;
+  if (half) {
+    // demi-tour : seconde pointe au départ, sens opposé
+    const a2 = pts[0], b2 = pts[1];
+    const ang2 = Math.atan2(a2[1] - b2[1], a2[0] - b2[0]);
+    heads += `<polygon points="${arrowHead(a2[0], a2[1], ang2, 3.6)}"
+                 fill="${ARROW_DARK}" stroke="${ARROW_HALO}" stroke-width="0.6"/>`;
   }
 
-  // Demi-cercle. Direction +1 = horaire vu depuis cette face → arc de 9h à 3h
-  // en passant par le haut. Direction -1 = antihoraire → arc de 3h à 9h en passant par le haut.
-  const sweep = direction === 1 ? 1 : 0;  // SVG: 1 = sens horaire dans le viewBox
-
-  // Points de départ/fin de l'arc (sur les côtés gauche et droit du centre)
-  const x1 = cx - r, y1 = cy;
-  const x2 = cx + r, y2 = cy;
-
-  // Pointe de flèche à la fin de l'arc
-  let arrowTip, arrowBase1, arrowBase2;
-  if (direction === 1) {
-    // arc va de gauche vers droite par le haut → finit en (x2, y2) en descendant
-    arrowTip   = [x2, y2 + 2];
-    arrowBase1 = [x2 - 5, y2 - 4];
-    arrowBase2 = [x2 + 5, y2 - 4];
-  } else {
-    // arc va de droite vers gauche par le haut → finit en (x1, y1) en descendant
-    arrowTip   = [x1, y1 + 2];
-    arrowBase1 = [x1 - 5, y1 - 4];
-    arrowBase2 = [x1 + 5, y1 - 4];
-  }
-
+  // tracé : halo clair dessous, trait sombre dessus → visible sur toute couleur
   return `
-    <path d="M ${x1} ${y1} A ${r} ${r} 0 0 ${sweep} ${x2} ${y2}"
-          fill="none" stroke="${ARROW}" stroke-width="2.6" stroke-linecap="round"/>
-    <polygon points="${arrowTip.join(',')} ${arrowBase1.join(',')} ${arrowBase2.join(',')}" fill="${ARROW}"/>
+    <path d="${d}" fill="none" stroke="${ARROW_HALO}" stroke-width="4.2"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${d}" fill="none" stroke="${ARROW_DARK}" stroke-width="2.3"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    ${heads}
   `;
 }
 
-// ─── API publique : crée un élément SVG pour un mouvement ────────────────
+// ─── Construction du SVG du mini-cube pour un mouvement ──────────────────
+function cubeSvg(face, suffix) {
+  const { axis, layer, rot } = MOVE[face];
+  const half = suffix === '2';
+  const rotSign = suffix === "'" ? -rot : rot;   // ' inverse le sens
+  const color = FACE_COLOR[face];
+
+  // On dessine F puis R puis U (les 3 faces visibles ne se chevauchent pas).
+  let stickers = '';
+  for (const f of ['F', 'R', 'U']) {
+    for (const s of faceStickers(f)) {
+      const fill = inLayer(s, axis, layer) ? color : NEUTRAL;
+      const d = 'M ' + s.corners.map(c => fmt(project(...c))).join(' L ') + ' Z';
+      stickers += `<path d="${d}" fill="${fill}" stroke="${STICKER_LN}"
+                     stroke-width="0.7" stroke-linejoin="round"/>`;
+    }
+  }
+
+  const arrow = rotationArrow(axis, layer, rotSign, half);
+  return `<svg viewBox="0 0 64 64" class="move-card__cube-svg" aria-hidden="true">
+            ${stickers}${arrow}
+          </svg>`;
+}
+
+// ─── API publique : crée une carte DOM pour un mouvement ─────────────────
 export function createMoveIcon(move) {
   const m = move.match(/^([RLUDFB])([2']?)$/);
   if (!m) throw new Error(`Move inconnu : ${move}`);
   const face = m[1];
   const suffix = m[2];
 
-  const info = FACE_INFO[face];
+  const turnKey = suffix === '2' ? 'half' : suffix === "'" ? 'ccw' : 'cw';
+  const faceName = t(`moves.faces.${face}`);
+  const dirName = t(`moves.turns.${turnKey}`);
 
-  // direction : +1 = horaire (= notation par défaut), -1 = antihoraire ('),
-  // 2 = demi-tour (2)
-  let direction;
-  if (suffix === "2") direction = 2;
-  else if (suffix === "'") direction = -1;
-  else direction = 1;
-
-  // Si la face est cachée (L, D, B), on inverse le sens de la flèche affichée
-  // car visuellement la rotation se voit "depuis le côté opposé".
-  if (info.invertArrow && direction !== 2) direction = -direction;
-
-  // Détermine quelle face visible est colorée
-  const activeFace = info.onFace;
-
-  // Style des 3 faces visibles : la face active en accent, les autres en gris.
-  // Si la rotation est sur une face cachée, on ajoute un "voile" plus sombre
-  // sur la face affichée pour indiquer que c'est la face *opposée* qui tourne.
-  const fills = {
-    U: activeFace === 'U' ? (info.hiddenFace ? HIDDEN_FACE : ACCENT) : FACE_LIGHT,
-    F: activeFace === 'F' ? (info.hiddenFace ? HIDDEN_FACE : ACCENT) : FACE_DARK,
-    R: activeFace === 'R' ? (info.hiddenFace ? HIDDEN_FACE : ACCENT) : FACE_LIGHT,
-  };
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="move-icon-svg">
-      <path d="${FACE_PATHS.U}" fill="${fills.U}" stroke="${STROKE}" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="${FACE_PATHS.F}" fill="${fills.F}" stroke="${STROKE}" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="${FACE_PATHS.R}" fill="${fills.R}" stroke="${STROKE}" stroke-width="1.5" stroke-linejoin="round"/>
-      ${arrowOnFace(activeFace, direction)}
-    </svg>
-  `;
-
-  // Wrapping div avec libellé textuel (i18n)
-  const faceLabel = t(`moves.${info.labelKey}`);
-  const hiddenSuffix = info.hiddenFace ? ` ${t('moves.hidden')}` : '';
   const wrapper = document.createElement('div');
-  wrapper.className = 'move-icon';
+  wrapper.className = 'move-card';
+  wrapper.setAttribute('role', 'listitem');
+  wrapper.setAttribute('aria-label', `${faceName}, ${dirName} (${move})`);
   wrapper.innerHTML = `
-    ${svg}
-    <div class="move-icon-text">
-      <span class="move-icon-notation">${escapeHtml(move)}</span>
-      <span class="move-icon-label">${escapeHtml(faceLabel + hiddenSuffix)}</span>
-    </div>
+    <span class="move-card__cube">${cubeSvg(face, suffix)}</span>
+    <span class="move-card__text">
+      <span class="move-card__face">${escapeHtml(faceName)}</span>
+      <span class="move-card__dir">${escapeHtml(dirName)}</span>
+    </span>
+    <span class="move-card__badge">${escapeHtml(move)}</span>
   `;
   return wrapper;
 }

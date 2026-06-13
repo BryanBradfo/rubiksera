@@ -11,6 +11,7 @@ export default {
     subtitle: "Méthode débutant pas à pas — fiche de Victor Colin",
     stepLabel: "Étape",
     movesLabel: "Mouvements de cette étape",
+    movesHint: "Chaque carte fait tourner une face. Sa couleur est celle de cette face sur le cube.",
     noMovesPlaceholder: "(aucun mouvement — pas de formule miracle, c'est à toi !)",
     btnPrev: "◀ Précédent",
     btnPlay: "▶ Lecture",
@@ -38,6 +39,21 @@ export default {
     front: "Avant",
     back: "Arrière",
     hidden: "(cachée)",
+    // Phrases complètes affichées sur chaque carte de mouvement.
+    faces: {
+      R: "Face droite",
+      L: "Face gauche",
+      U: "Face du haut",
+      D: "Face du bas",
+      F: "Face avant",
+      B: "Face arrière",
+    },
+    // Sens de rotation, en langage clair.
+    turns: {
+      cw: "sens horaire",
+      ccw: "sens antihoraire",
+      half: "demi-tour",
+    },
   },
 
   // Texte fidèle au PDF de Victor (rubiks.pdf)

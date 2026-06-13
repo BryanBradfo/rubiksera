@@ -11,6 +11,7 @@ export default {
     subtitle: "Beginner's method, step by step — Victor Colin's sheet",
     stepLabel: "Step",
     movesLabel: "Moves for this step",
+    movesHint: "Each card is a turn of one face. Its colour matches that face on the cube.",
     noMovesPlaceholder: "(no moves — no magic formula, it's up to you!)",
     btnPrev: "◀ Previous",
     btnPlay: "▶ Play",
@@ -38,6 +39,21 @@ export default {
     front: "Front",
     back: "Back",
     hidden: "(hidden)",
+    // Full noun phrases shown on each instruction card.
+    faces: {
+      R: "Right face",
+      L: "Left face",
+      U: "Top face",
+      D: "Bottom face",
+      F: "Front face",
+      B: "Back face",
+    },
+    // Rotation direction, in plain language.
+    turns: {
+      cw: "clockwise",
+      ccw: "counter-clockwise",
+      half: "half turn",
+    },
   },
 
   steps: [

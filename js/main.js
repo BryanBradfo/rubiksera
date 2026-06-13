@@ -63,6 +63,7 @@ const btnNext = document.getElementById('btn-next');
 const btnPlay = document.getElementById('btn-play');
 const btnReset = document.getElementById('btn-reset');
 const timelineEl = document.getElementById('timeline');
+const textPaneEl = document.querySelector('.text-pane');
 const speedSlider = document.getElementById('speed-slider');
 const speedValueEl = document.getElementById('speed-value');
 const creditLineEl = document.getElementById('credit-line');
@@ -83,9 +84,15 @@ function renderStep(idx) {
   stepBodyEl.innerHTML = step.body;
 
   while (movesListEl.firstChild) movesListEl.removeChild(movesListEl.firstChild);
+  // Placeholder (shown via CSS :empty) for steps with no formula — kept in
+  // sync with the current language.
+  movesListEl.dataset.empty = i18n.t('ui.noMovesPlaceholder');
   step.moves.forEach(m => {
     movesListEl.appendChild(createMoveIcon(m));
   });
+
+  // New step → start reading from the top of the pane.
+  if (textPaneEl) textPaneEl.scrollTop = 0;
 
   [...timelineEl.children].forEach((dot, i) => {
     dot.classList.toggle('active', i === idx);
@@ -111,6 +118,8 @@ async function playStep(idx, durationMs = null) {
       tokens[k].classList.toggle('current', k === i);
       tokens[k].classList.toggle('done', k < i);
     }
+    // Keep the move being animated visible while the cube turns.
+    if (tokens[i]) tokens[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
   for (const tok of tokens) {
     tok.classList.remove('current');
