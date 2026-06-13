@@ -6,13 +6,13 @@ export default {
   langName: 'English',
 
   ui: {
-    docTitle: "Solve a Rubik's cube — Victor Colin's method",
+    docTitle: "Solve a Rubik's cube · Victor Colin's method",
     title: "Solve a Rubik's cube",
-    subtitle: "Beginner's method, step by step — Victor Colin's sheet",
+    subtitle: "Beginner's method, step by step · Victor Colin's sheet",
     stepLabel: "Step",
     movesLabel: "Moves for this step",
     movesHint: "Each card is a turn of one face. Its colour matches that face on the cube.",
-    noMovesPlaceholder: "(no moves — no magic formula, it's up to you!)",
+    noMovesPlaceholder: "(no moves, no magic formula, it's up to you!)",
     btnPrev: "◀ Previous",
     btnPlay: "▶ Play",
     btnPause: "⏸ Pause",
@@ -27,7 +27,7 @@ export default {
       "<a href='assets/rubiks.pdf' target='_blank' rel='noopener'><code>rubiks.pdf</code></a> sheet " +
       "as well as the " +
       "<a href='https://youtu.be/Leml4U4D1r8' target='_blank' rel='noopener'>video tutorial</a> " +
-      "(« Résoudre le Rubik's Cube — solution complète pour débutants », in French).",
+      "(« Résoudre le Rubik's Cube : solution complète pour débutants », in French).",
     creditThanks: "Thanks Victor for the tutorial!",
   },
 
@@ -176,7 +176,7 @@ export default {
         (regardless of its orientation: the corners don't need to be solved yet,
         they just need to be in the right spots).</p>
 
-        <p><strong>Method:</strong> look for 1 of the 4 corners that is in the right spot — meaning
+        <p><strong>Method:</strong> look for 1 of the 4 corners that is in the right spot, meaning
         the colours of the corner match the colours of the adjacent faces.</p>
 
         <div class="case">

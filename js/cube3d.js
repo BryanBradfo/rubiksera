@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
 // ─── Palette des stickers du cube ───────────────────────────────────────
 // Convention : blanc = bas, jaune = haut, vert = avant, bleu = arrière,
@@ -30,10 +31,27 @@ const FACE_PLACEMENT = {
   B: { axis: 'z', sign: -1, pos: [0, 0, -0.49], rot: [0, PI_2 * 2, 0] },
 };
 
+// Ombre de contact douce : disque radial sombre → transparent (teinte chaude).
+function makeContactShadow() {
+  const s = 256;
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  g.addColorStop(0.0, 'rgba(38, 30, 18, 0.55)');
+  g.addColorStop(0.45, 'rgba(38, 30, 18, 0.32)');
+  g.addColorStop(1.0, 'rgba(38, 30, 18, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, s, s);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 // ─── Initialisation Three.js (scène, caméra, lumière, contrôles) ────────
 export function createCube3D(container) {
   const scene = new THREE.Scene();
-  scene.background = null;
+  scene.background = null;   // transparent : le fond "studio" est en CSS (fiable)
 
   // Deux vues canoniques :
   //   - 'white' : caméra en y NÉGATIF → on voit la face blanche (D) + rouge + vert.
@@ -53,27 +71,46 @@ export function createCube3D(container) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.28;
+  renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.appendChild(renderer.domElement);
 
   // ─── Éclairage photographique ───────────────────────────────────────
   // Lumière d'environnement (IBL) générée depuis une "pièce" virtuelle :
-  // donne aux tuiles brillantes des reflets doux et réalistes, bien plus
-  // élégant qu'un simple ambient plat.
+  // donne aux tuiles brillantes des reflets doux et réalistes.
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.32;     // peu de fill → modelé contrasté
 
-  // Lumière clé vive pour un reflet spéculaire net + un léger contre-jour + un rim.
-  const key = new THREE.DirectionalLight(0xffffff, 2.4);
-  key.position.set(5, 9, 7);
+  // Softbox : reflet doux et large sur les tuiles brillantes (highlight studio).
+  RectAreaLightUniformsLib.init();
+  const softbox = new THREE.RectAreaLight(0xffffff, 4.5, 6, 6);
+  softbox.position.set(3.5, 6.5, 6);
+  softbox.lookAt(0, 0, 0);
+  scene.add(softbox);
+
+  // Clé dominante très directionnelle → une face vive, les autres plus
+  // sombres : c'est ce modelé qui donne le relief "photographié".
+  const key = new THREE.DirectionalLight(0xfff6ea, 2.8);
+  key.position.set(6, 10, 5);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xfff2e0, 0.45);
-  fill.position.set(-6, -4, -5);
+  // Fill ambiant très faible, juste pour ne pas boucher les ombres.
+  const fill = new THREE.DirectionalLight(0xdfe6ff, 0.22);
+  fill.position.set(-7, -2, -4);
   scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffffff, 0.8);
-  rim.position.set(-4, 6, -6);
-  scene.add(rim);
+
+  // Ombre de contact (approximation douce) sous le cube. Visible seulement
+  // quand la caméra est au-dessus (vue jaune) ; cachée en vue "blanche".
+  const contactShadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.4, 4.4),
+    new THREE.MeshBasicMaterial({
+      map: makeContactShadow(), transparent: true, opacity: 0.9,
+      depthWrite: false,
+    })
+  );
+  contactShadow.rotation.x = -PI_2;
+  contactShadow.position.y = -1.62;
+  scene.add(contactShadow);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -100,9 +137,17 @@ export function createCube3D(container) {
   // proéminent pour l'effet "sticker en relief".
   const tileGeom = new RoundedBoxGeometry(0.76, 0.76, 0.09, 4, 0.15);
   const bodyMat = new THREE.MeshPhysicalMaterial({
-    color: PLASTIC, roughness: 0.5, metalness: 0,
-    clearcoat: 0.4, clearcoatRoughness: 0.45,
+    color: PLASTIC, roughness: 0.55, metalness: 0,
+    clearcoat: 0.3, clearcoatRoughness: 0.5,
   });
+  // Couleur de tuile légèrement désaturée + variation, pour éviter l'aplat
+  // "néon" trop parfait qui fait synthétique.
+  function tileColor(hex) {
+    const c = new THREE.Color(hex);
+    const hsl = {}; c.getHSL(hsl);
+    c.setHSL(hsl.h, hsl.s * 0.9, hsl.l * 0.96);
+    return c;
+  }
 
   for (let x = -1; x <= 1; x++) {
     for (let y = -1; y <= 1; y++) {
@@ -123,14 +168,17 @@ export function createCube3D(container) {
 
         for (const f of faces) {
           const p = FACE_PLACEMENT[f];
+          const col = tileColor(STICKERS[f]);
           const mat = new THREE.MeshPhysicalMaterial({
-            color: STICKERS[f], roughness: 0.17, metalness: 0,
-            clearcoat: 1.0, clearcoatRoughness: 0.1, envMapIntensity: 1.3,
+            color: col, metalness: 0,
+            // légère variation de rugosité par tuile → reflets non uniformes
+            roughness: 0.2 + Math.random() * 0.08,
+            clearcoat: 1.0, clearcoatRoughness: 0.06, envMapIntensity: 0.7,
           });
           const tile = new THREE.Mesh(tileGeom, mat);
           tile.position.set(...p.pos);
           tile.rotation.set(...p.rot);
-          tile.userData.baseColor = new THREE.Color(STICKERS[f]);
+          tile.userData.baseColor = col.clone();
           tile.userData.isSticker = true;
           cubie.add(tile);
         }
@@ -172,6 +220,8 @@ export function createCube3D(container) {
     // 4 s qui suivent une interaction utilisateur.
     controls.autoRotate = !animating && (performance.now() - lastInteract > 4000);
     controls.update();
+    // L'ombre de contact n'a de sens que vue de dessus (vue jaune).
+    contactShadow.visible = camera.position.y > 0.5;
     renderer.render(scene, camera);
   }
   animate();
@@ -267,7 +317,7 @@ export function createCube3D(container) {
   }
 
   function isBusy() {
-    // pas de vrai flag synchrone — l'appelant doit await le retour
+    // pas de vrai flag synchrone - l'appelant doit await le retour
     // de applySequence pour savoir quand c'est fini.
     return busy;
   }

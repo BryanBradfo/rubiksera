@@ -17,7 +17,7 @@
 //      3 4 5
 //      6 7 8        ← rangée basse
 //
-// Le facelet 4 (5e d'une face) est le centre — il ne bouge jamais.
+// Le facelet 4 (5e d'une face) est le centre - il ne bouge jamais.
 //
 // Convention 3D (identique à cube3d.js) :
 //   +X = droite (face R)         +Y = haut (face U)        +Z = avant (face F)
@@ -33,32 +33,32 @@ const FACE_INDEX = { U: 0, R: 1, F: 2, D: 3, L: 4, B: 5 };
 // du sticker dans {-1, 0, 1}^3 et (nx,ny,nz) la direction de sa normale
 // (vers l'extérieur du cube).
 const FACELET_POS = [
-  // U face (y=+1) — facelets 0..8 — vue d'au-dessus, "haut" du layout = -Z (arrière du cube)
+  // U face (y=+1) - facelets 0..8 - vue d'au-dessus, "haut" du layout = -Z (arrière du cube)
   [-1, 1, -1, 0, 1, 0], [0, 1, -1, 0, 1, 0], [1, 1, -1, 0, 1, 0],
   [-1, 1,  0, 0, 1, 0], [0, 1,  0, 0, 1, 0], [1, 1,  0, 0, 1, 0],
   [-1, 1,  1, 0, 1, 0], [0, 1,  1, 0, 1, 0], [1, 1,  1, 0, 1, 0],
 
-  // R face (x=+1) — facelets 9..17 — vue de la droite, "haut" du layout = +Y, "gauche" = +Z
+  // R face (x=+1) - facelets 9..17 - vue de la droite, "haut" du layout = +Y, "gauche" = +Z
   [1,  1,  1, 1, 0, 0], [1,  1,  0, 1, 0, 0], [1,  1, -1, 1, 0, 0],
   [1,  0,  1, 1, 0, 0], [1,  0,  0, 1, 0, 0], [1,  0, -1, 1, 0, 0],
   [1, -1,  1, 1, 0, 0], [1, -1,  0, 1, 0, 0], [1, -1, -1, 1, 0, 0],
 
-  // F face (z=+1) — facelets 18..26 — vue de devant, "haut" = +Y, "gauche" = -X
+  // F face (z=+1) - facelets 18..26 - vue de devant, "haut" = +Y, "gauche" = -X
   [-1,  1, 1, 0, 0, 1], [0,  1, 1, 0, 0, 1], [1,  1, 1, 0, 0, 1],
   [-1,  0, 1, 0, 0, 1], [0,  0, 1, 0, 0, 1], [1,  0, 1, 0, 0, 1],
   [-1, -1, 1, 0, 0, 1], [0, -1, 1, 0, 0, 1], [1, -1, 1, 0, 0, 1],
 
-  // D face (y=-1) — facelets 27..35 — vue d'en bas, "haut" du layout = +Z (avant)
+  // D face (y=-1) - facelets 27..35 - vue d'en bas, "haut" du layout = +Z (avant)
   [-1, -1,  1, 0, -1, 0], [0, -1,  1, 0, -1, 0], [1, -1,  1, 0, -1, 0],
   [-1, -1,  0, 0, -1, 0], [0, -1,  0, 0, -1, 0], [1, -1,  0, 0, -1, 0],
   [-1, -1, -1, 0, -1, 0], [0, -1, -1, 0, -1, 0], [1, -1, -1, 0, -1, 0],
 
-  // L face (x=-1) — facelets 36..44 — vue de gauche, "haut" = +Y, "gauche" = -Z
+  // L face (x=-1) - facelets 36..44 - vue de gauche, "haut" = +Y, "gauche" = -Z
   [-1,  1, -1, -1, 0, 0], [-1,  1,  0, -1, 0, 0], [-1,  1,  1, -1, 0, 0],
   [-1,  0, -1, -1, 0, 0], [-1,  0,  0, -1, 0, 0], [-1,  0,  1, -1, 0, 0],
   [-1, -1, -1, -1, 0, 0], [-1, -1,  0, -1, 0, 0], [-1, -1,  1, -1, 0, 0],
 
-  // B face (z=-1) — facelets 45..53 — vue de derrière, "haut" = +Y, "gauche" = +X
+  // B face (z=-1) - facelets 45..53 - vue de derrière, "haut" = +Y, "gauche" = +X
   [ 1,  1, -1, 0, 0, -1], [0,  1, -1, 0, 0, -1], [-1,  1, -1, 0, 0, -1],
   [ 1,  0, -1, 0, 0, -1], [0,  0, -1, 0, 0, -1], [-1,  0, -1, 0, 0, -1],
   [ 1, -1, -1, 0, 0, -1], [0, -1, -1, 0, 0, -1], [-1, -1, -1, 0, 0, -1],

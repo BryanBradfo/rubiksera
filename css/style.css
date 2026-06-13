@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════
-   rubiksera — light editorial theme
+   rubiksera - light editorial theme
    Warm paper canvas · Fraunces display serif · hairline structure ·
    the cube on a soft gallery pedestal · a single warm-clay accent.
    ══════════════════════════════════════════════════════════════════════ */
@@ -19,7 +19,7 @@
   --hair:        #e6decd;
   --hair-strong: #d8cdb6;
 
-  /* Accent (warm clay) — used sparingly */
+  /* Accent (warm clay) - used sparingly */
   --accent:      #b5651d;
   --accent-deep: #964f12;
   --accent-soft: rgba(181, 101, 29, 0.10);
@@ -102,7 +102,7 @@ code {
   letter-spacing: 0.18em;
 }
 
-/* Language switcher — minimal text toggle, top-right */
+/* Language switcher - minimal text toggle, top-right */
 .lang-switcher {
   position: absolute;
   top: 30px;
@@ -160,25 +160,14 @@ code {
   min-height: 500px;
   border-radius: 20px;
   overflow: hidden;
+  /* "studio" : un halo doux en haut, un sol plus chaud/sombre en bas, pour
+     que le cube soit posé dans un espace plutôt que flottant sur un aplat. */
   background:
-    radial-gradient(78% 64% at 50% 40%,
-      #ffffff 0%, var(--paper-stage) 58%, #f0e9da 100%);
+    radial-gradient(120% 80% at 50% 8%, #fffdf9 0%, rgba(255,253,249,0) 55%),
+    linear-gradient(180deg, #f1ece1 0%, #ece4d4 46%, #d8ccb4 78%, #c3b59c 100%);
+  background-color: #e9e1d0;
   border: 1px solid var(--hair);
-  box-shadow: var(--shadow-panel), inset 0 1px 0 #ffffff;
-}
-/* soft contact shadow grounding the floating cube */
-#cube-canvas-container::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 13%;
-  width: 46%;
-  height: 7%;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center,
-      rgba(33, 29, 24, 0.16) 0%, rgba(33, 29, 24, 0) 70%);
-  filter: blur(3px);
-  pointer-events: none;
+  box-shadow: var(--shadow-panel), inset 0 1px 0 #fffdf9;
 }
 #cube-canvas-container canvas { display: block; position: relative; z-index: 1; }
 

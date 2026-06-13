@@ -6,13 +6,13 @@ export default {
   langName: 'Français',
 
   ui: {
-    docTitle: "Résoudre un Rubik's cube — méthode Victor Colin",
+    docTitle: "Résoudre un Rubik's cube · méthode Victor Colin",
     title: "Résoudre un Rubik's cube",
-    subtitle: "Méthode débutant pas à pas — fiche de Victor Colin",
+    subtitle: "Méthode débutant pas à pas · fiche de Victor Colin",
     stepLabel: "Étape",
     movesLabel: "Mouvements de cette étape",
     movesHint: "Chaque carte fait tourner une face. Sa couleur est celle de cette face sur le cube.",
-    noMovesPlaceholder: "(aucun mouvement — pas de formule miracle, c'est à toi !)",
+    noMovesPlaceholder: "(aucun mouvement, pas de formule miracle, c'est à toi !)",
     btnPrev: "◀ Précédent",
     btnPlay: "▶ Lecture",
     btnPause: "⏸ Pause",
@@ -27,7 +27,7 @@ export default {
       "<a href='assets/rubiks.pdf' target='_blank' rel='noopener'><code>rubiks.pdf</code></a> " +
       "ainsi que le " +
       "<a href='https://youtu.be/Leml4U4D1r8' target='_blank' rel='noopener'>tutoriel vidéo</a> " +
-      "(« Résoudre le Rubik's Cube — solution complète pour débutants »).",
+      "(« Résoudre le Rubik's Cube : solution complète pour débutants »).",
     creditThanks: "Merci Victor pour ton tuto !",
   },
 
