@@ -58,6 +58,9 @@ node --test tests/*.test.mjs
 ```
 .
 ├── index.html
+├── sitemap.xml               # Sitemap for search engines
+├── robots.txt                # Crawl rules (everything allowed) + sitemap link
+├── llms.txt                  # Plain summary of the site and the 8 steps for AI assistants
 ├── assets/
 │   ├── brand/                # Logo, teacher face crop, social preview image
 │   ├── favicon.png           # Favicon (the teacher's face)

@@ -1,0 +1,5 @@
+# rubiksera: everything is public, search engines and AI assistants are welcome.
+User-agent: *
+Allow: /
+
+Sitemap: https://rubiksera.bradfo.me/sitemap.xml
