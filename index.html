@@ -33,58 +33,88 @@
     }
   </script>
 </head>
-<body>
-  <header class="topbar">
-    <h1 data-i18n="ui.title">…</h1>
-    <p class="subtitle" data-i18n="ui.subtitle">…</p>
-    <div class="lang-switcher" role="group" aria-label="Language">
-      <button class="lang-btn" data-lang="fr" type="button">FR</button>
-      <button class="lang-btn" data-lang="en" type="button">EN</button>
-    </div>
-  </header>
+<body data-phase="1">
+  <div class="planche">
+    <header class="panel topbar">
+      <a class="brand" href="./" aria-label="rubiksera">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__word">RUBIKSERA</span>
+      </a>
+      <p class="chapter">
+        <span class="chapter__tag"><span data-i18n="ui.chapterLabel">Chapitre</span> <span id="chapter-num">1</span></span>
+        <span id="chapter-name" class="chapter__name"></span>
+      </p>
+      <a class="credit-tag" href="https://youtu.be/Leml4U4D1r8" target="_blank" rel="noopener" data-i18n="ui.creditTag">Méthode de Victor Colin</a>
+      <div class="lang-switcher" role="group" aria-label="Language">
+        <button class="lang-btn" data-lang="fr" type="button">FR</button>
+        <button class="lang-btn" data-lang="en" type="button">EN</button>
+      </div>
+    </header>
 
-  <main class="layout">
-    <section class="cube-pane">
+    <section class="panel stage" id="stage">
+      <div class="stage__lines" aria-hidden="true"></div>
       <div id="cube-canvas-container"></div>
-      <p class="cube-hint" data-i18n="ui.cubeHint">…</p>
+      <p id="sfx" class="sfx" aria-hidden="true"></p>
+      <span id="step-big-num" class="big-num" aria-hidden="true">01</span>
+      <p class="cube-hint" data-i18n="ui.cubeHint"></p>
     </section>
 
-    <aside class="text-pane">
-      <div class="step-header">
-        <span class="step-counter">
-          <span data-i18n="ui.stepLabel">Step</span>
-          <span id="step-num">1</span> / 8
-        </span>
-        <h2 id="step-title">…</h2>
+    <section class="teacher">
+      <img class="teacher__face" src="assets/brand/face.png" alt="" width="400" height="480" />
+      <div class="bubble">
+        <div class="bubble__inner" id="bubble-inner">
+          <p class="bubble__kicker"><span data-i18n="ui.stepLabel">Étape</span> <span id="step-num">1</span> <span data-i18n="ui.stepOf">sur</span> 8</p>
+          <h1 id="step-title" class="bubble__title" aria-live="polite"></h1>
+          <div id="step-body" class="step-body"></div>
+        </div>
       </div>
+    </section>
 
-      <div id="step-body" class="step-body"></div>
-
-      <div class="formula-block">
-        <p class="formula-label" data-i18n="ui.movesLabel">…</p>
-        <p class="moves-hint" data-i18n="ui.movesHint">…</p>
-        <div id="moves-list" class="moves-list" role="list"></div>
+    <section class="panel formula">
+      <div class="formula__head">
+        <p class="label" data-i18n="ui.formulaLabel">La formule</p>
+        <ul class="legend" aria-hidden="true">
+          <li class="legend__item legend__item--cw" data-i18n="ui.dirLegend.cw"></li>
+          <li class="legend__item legend__item--ccw" data-i18n="ui.dirLegend.ccw"></li>
+          <li class="legend__item legend__item--half" data-i18n="ui.dirLegend.half"></li>
+        </ul>
+        <label class="speed" for="speed-slider">
+          <span class="label" data-i18n="ui.speedLabel">Vitesse</span>
+          <input id="speed-slider" type="range" min="0.3" max="2" step="0.1" value="1.0" />
+          <span id="speed-value" class="speed__value">1,0x</span>
+        </label>
       </div>
-    </aside>
-  </main>
+      <p class="formula__hint" data-i18n="ui.movesHint"></p>
+      <div id="moves-list" class="moves-list" role="list"></div>
+    </section>
 
-  <nav class="controls">
-    <button id="btn-prev" class="ctrl-btn" data-i18n="ui.btnPrev">◀ …</button>
-    <button id="btn-play" class="ctrl-btn ctrl-play" data-i18n="ui.btnPlay">▶ …</button>
-    <button id="btn-next" class="ctrl-btn" data-i18n="ui.btnNext">… ▶</button>
-    <div id="timeline" class="timeline"></div>
-    <div class="speed-control">
-      <label for="speed-slider" class="speed-label">
-        <span data-i18n="ui.speedLabel">…</span> <span id="speed-value">1.0×</span>
-      </label>
-      <input id="speed-slider" type="range" min="0.3" max="2" step="0.1" value="1.0" />
+    <div class="dock">
+      <div class="transport">
+        <button id="btn-prev" class="btn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2.5v14H6zM19 5v14L9.5 12z"/></svg>
+          <span class="btn__label" data-i18n="ui.btnPrev">Précédent</span>
+        </button>
+        <button id="btn-play" class="btn btn--play" type="button">
+          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15L19.5 12z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>
+          <span class="btn__label" id="btn-play-label">Lecture</span>
+        </button>
+        <button id="btn-next" class="btn" type="button">
+          <span class="btn__label" data-i18n="ui.btnNext">Suivant</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 5H18v14h-2.5zM5 5v14l9.5-7z"/></svg>
+        </button>
+        <button id="btn-reset" class="btn btn--reset" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.3A6 6 0 1 0 12 6v3L7.5 5 12 1z"/></svg>
+          <span class="btn__label" data-i18n="ui.btnReset">Recommencer</span>
+        </button>
+      </div>
+      <nav id="pages" class="pages" aria-label="Étapes"></nav>
     </div>
-    <button id="btn-reset" class="ctrl-btn ctrl-reset" data-i18n="ui.btnReset">↻ …</button>
-  </nav>
+  </div>
 
-  <footer class="credit">
-    <p id="credit-line">…</p>
-    <p class="credit-thanks" data-i18n="ui.creditThanks">…</p>
+  <footer class="postface">
+    <p id="credit-line"></p>
+    <p class="postface__thanks" data-i18n="ui.creditThanks"></p>
   </footer>
 
   <script type="module" src="js/main.js"></script>

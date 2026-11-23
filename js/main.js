@@ -4,6 +4,7 @@ import { createMoveIcon } from './moveIcons.js';
 import { createCube as createCubeState, applyMove as engineApplyMove, applySequence as engineApplySequence, isSolved as engineIsSolved } from './cubeEngine.js';
 import * as solver from './lblSolver.js';
 import * as i18n from './i18n.js';
+import { phaseOf, splitHighlight } from './phases.js';
 
 // ─── Scramble fixé + solution pré-calculée ───────────────────────────────
 // Le scramble + les 8 séquences de moves par étape sont pré-calculés via le
@@ -62,8 +63,13 @@ const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 const btnPlay = document.getElementById('btn-play');
 const btnReset = document.getElementById('btn-reset');
-const timelineEl = document.getElementById('timeline');
-const textPaneEl = document.querySelector('.text-pane');
+const btnPlayLabel = document.getElementById('btn-play-label');
+const pagesEl = document.getElementById('pages');
+const bubbleInnerEl = document.getElementById('bubble-inner');
+const bigNumEl = document.getElementById('step-big-num');
+const chapterNumEl = document.getElementById('chapter-num');
+const chapterNameEl = document.getElementById('chapter-name');
+const stageEl = document.getElementById('stage');
 const speedSlider = document.getElementById('speed-slider');
 const speedValueEl = document.getElementById('speed-value');
 const creditLineEl = document.getElementById('credit-line');
@@ -74,35 +80,65 @@ let currentStep = 0;
 let playing = false;
 let busy = false;
 
-// ─── Render du panneau de droite ─────────────────────────────────────────
+// ─── Render de l'étape (bulle, formule, chapitre, pages) ─────────────────
+function renderTitle(step) {
+  // Titre construit en nœuds DOM : le mot clé est entouré d'un <mark>.
+  stepTitleEl.replaceChildren();
+  const parts = splitHighlight(step.title, step.highlight);
+  if (!parts) {
+    stepTitleEl.textContent = step.title;
+    return;
+  }
+  const mark = document.createElement('mark');
+  mark.textContent = parts.mark;
+  stepTitleEl.append(parts.before, mark, parts.after);
+}
+
 function renderStep(idx) {
   const step = STEPS[idx];
+  const phase = phaseOf(idx);
+  document.body.dataset.phase = String(phase);
+
   stepNumEl.textContent = step.number;
-  stepTitleEl.textContent = step.title;
+  bigNumEl.textContent = String(step.number).padStart(2, '0');
+  chapterNumEl.textContent = phase;
+  chapterNameEl.textContent = i18n.t(`ui.phases.p${phase}`);
+  renderTitle(step);
   // step.body est du HTML statique défini dans les fichiers i18n/*.js
   // (contrôlé par nous, jamais de saisie utilisateur).
   stepBodyEl.innerHTML = step.body;
 
-  while (movesListEl.firstChild) movesListEl.removeChild(movesListEl.firstChild);
+  movesListEl.replaceChildren();
   // Placeholder (shown via CSS :empty) for steps with no formula, kept in
   // sync with the current language.
   movesListEl.dataset.empty = i18n.t('ui.noMovesPlaceholder');
   step.moves.forEach(m => {
     movesListEl.appendChild(createMoveIcon(m));
   });
+  movesListEl.scrollTo({ top: 0, left: 0 });
 
-  // New step → start reading from the top of the pane.
-  if (textPaneEl) textPaneEl.scrollTop = 0;
+  // Nouvelle étape : on relit la bulle depuis le haut, avec une petite entrée.
+  bubbleInnerEl.scrollTop = 0;
+  bubbleInnerEl.classList.remove('is-entering');
+  void bubbleInnerEl.offsetWidth;   // relance l'animation
+  bubbleInnerEl.classList.add('is-entering');
 
-  [...timelineEl.children].forEach((dot, i) => {
-    dot.classList.toggle('active', i === idx);
-    dot.classList.toggle('done', i < idx);
+  [...pagesEl.children].forEach((page, i) => {
+    page.classList.toggle('current', i === idx);
+    page.classList.toggle('done', i < idx);
+    if (i === idx) page.setAttribute('aria-current', 'step');
+    else page.removeAttribute('aria-current');
+    page.title = `${i18n.t('ui.stepLabel')} ${i + 1} : ${STEPS[i].title}`;
   });
+}
 
-  // Met à jour le titre des dots avec le titre de leur étape
-  [...timelineEl.children].forEach((dot, i) => {
-    dot.title = `${i18n.t('ui.stepLabel')} ${i + 1} · ${STEPS[i].title}`;
-  });
+// Garde la carte en cours visible en ne faisant défiler QUE la liste des
+// mouvements (jamais la page : sur mobile, le cube doit rester à l'écran).
+function revealCard(card) {
+  const list = movesListEl;
+  const left = card.offsetLeft - (list.clientWidth - card.offsetWidth) / 2;
+  const top = card.offsetTop - (list.clientHeight - card.offsetHeight) / 2;
+  list.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: 'smooth' });
 }
 
 // ─── Joue les moves d'une étape ──────────────────────────────────────────
@@ -119,7 +155,7 @@ async function playStep(idx, durationMs = null) {
       tokens[k].classList.toggle('done', k < i);
     }
     // Keep the move being animated visible while the cube turns.
-    if (tokens[i]) tokens[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (tokens[i]) revealCard(tokens[i]);
   });
   for (const tok of tokens) {
     tok.classList.remove('current');
@@ -160,7 +196,7 @@ function setControlsDisabled(disabled) {
   btnPrev.disabled = disabled || currentStep === 0;
   btnNext.disabled = disabled || currentStep >= STEPS.length - 1;
   btnReset.disabled = disabled;
-  for (const dot of timelineEl.children) dot.disabled = disabled;
+  for (const page of pagesEl.children) page.disabled = disabled;
 }
 
 function refreshNavButtons() {
@@ -169,7 +205,9 @@ function refreshNavButtons() {
 }
 
 function setPlayButtonText() {
-  btnPlay.textContent = playing ? i18n.t('ui.btnPause') : i18n.t('ui.btnPlay');
+  btnPlayLabel.textContent = playing ? i18n.t('ui.btnPause') : i18n.t('ui.btnPlay');
+  btnPlay.classList.toggle('is-playing', playing);
+  btnPlay.setAttribute('aria-pressed', String(playing));
 }
 
 // ─── Lecture auto ────────────────────────────────────────────────────────
@@ -223,11 +261,16 @@ function renderUIText() {
   creditLineEl.innerHTML = i18n.t('ui.creditLineHTML');
   setPlayButtonText();
   // Met aussi à jour la valeur de vitesse affichée (juste le nombre, label séparé)
-  speedValueEl.textContent = `${speedMult.toFixed(1)}×`;
+  speedValueEl.textContent = formatSpeed(speedMult);
+  pagesEl.setAttribute('aria-label', i18n.t('ui.stepLabel'));
   // Active le bouton de langue courant
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === i18n.getLang());
   });
+}
+
+function formatSpeed(mult) {
+  return `${mult.toLocaleString(i18n.getLang(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}×`;
 }
 
 // ─── Re-render complet après changement de langue ────────────────────────
@@ -250,13 +293,18 @@ function reRenderAll() {
   const container = document.getElementById('cube-canvas-container');
   cube = createCube3D(container);
 
-  // 4. Construit la timeline (8 puces cliquables)
+  // 4. Construit les 8 pages cliquables, colorées par phase
   for (let i = 0; i < STEPS.length; i++) {
-    const dot = document.createElement('button');
-    dot.className = 'timeline-dot';
-    dot.dataset.step = i + 1;
-    dot.addEventListener('click', () => jumpToStep(i));
-    timelineEl.appendChild(dot);
+    const page = document.createElement('button');
+    page.type = 'button';
+    page.className = 'page';
+    page.dataset.step = i + 1;
+    page.dataset.phase = phaseOf(i);
+    const num = document.createElement('span');
+    num.textContent = i + 1;
+    page.appendChild(num);
+    page.addEventListener('click', () => jumpToStep(i));
+    pagesEl.appendChild(page);
   }
 
   // 5. Setup des event listeners (boutons + slider + lang switcher)
@@ -327,7 +375,7 @@ function setupEventListeners() {
   speedSlider.value = speedMult.toString();
   speedSlider.addEventListener('input', () => {
     speedMult = parseFloat(speedSlider.value);
-    speedValueEl.textContent = `${speedMult.toFixed(1)}×`;
+    speedValueEl.textContent = formatSpeed(speedMult);
     localStorage.setItem(SPEED_STORAGE_KEY, speedMult.toString());
   });
 
