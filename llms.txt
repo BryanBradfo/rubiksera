@@ -1,0 +1,26 @@
+# rubiksera
+
+> rubiksera teaches anyone, children and adults, to solve a 3x3 Rubik's Cube with Victor Colin's beginner method: 8 steps, an interactive 3D cube that plays every move, and the text of each step in French or English.
+
+Site: https://rubiksera.bradfo.me/
+
+The page is a single interactive tool. A scrambled cube is solved step by step; for each step the site shows the instructions (taken word for word from Victor Colin's sheet) and the moves as cards, with the turning face and the direction in plain words. Notation: R right, L left, U up (top), D down (bottom), F front, B back; a quote (R') means counter clockwise, a 2 (R2) means half turn.
+
+## The 8 steps
+
+The method has 3 phases: the first layer (steps 1 to 3), the second layer (step 4), the yellow face (steps 5 to 8).
+
+1. Make a cross on the white face, by bringing up the edges that have white (no formula, you learn it by trying).
+2. Place the edges of the cross in the right spots, so that each edge matches the centre of its face.
+3. Place the corners of the first layer: put a white corner under its slot, then repeat R' D' R D until it is solved.
+4. Solve the second layer: find an upside down T without yellow on top, then insert its edge to the left (U' L' U L U F U' F') or to the right (U R U' R' U' F' U F).
+5. Make a yellow cross on the top face (F R U R' U' F').
+6. Place the edges of the yellow cross in the right spots, exactly as in step 2.
+7. Place the 4 last corners in the right spots (U R U' L' U R' U' L).
+8. Orient the 4 last corners to finish the cube: repeat R' D' R D on each corner, turning only the top face between corners.
+
+## Credits
+
+- Method and reference sheet: Victor Colin, video tutorial in French: https://youtu.be/Leml4U4D1r8
+- Reference sheet (PDF, French): https://rubiksera.bradfo.me/assets/rubiks.pdf
+- Source code (MIT): https://github.com/BryanBradfo/rubiksera
