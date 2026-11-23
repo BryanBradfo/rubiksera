@@ -35,9 +35,9 @@ export default {
     sfxStep: "CLIC !",
     sfxSolved: "BRAVO !",
     creditLineHTML:
-      "<strong>Méthode et fiche</strong> par " +
+      "<strong>Méthode et fiche méthode</strong> par " +
       "<a href='https://youtu.be/Leml4U4D1r8' target='_blank' rel='noopener'>Victor Colin</a>. " +
-      "Cette page reprend fidèlement la fiche " +
+      "Cette page reprend fidèlement la fiche méthode " +
       "<a href='assets/rubiks.pdf' target='_blank' rel='noopener'><code>rubiks.pdf</code></a> " +
       "ainsi que le " +
       "<a href='https://youtu.be/Leml4U4D1r8' target='_blank' rel='noopener'>tutoriel vidéo</a> " +

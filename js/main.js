@@ -80,7 +80,8 @@ let cube;             // créé après i18n.init()
 let currentStep = 0;
 let playing = false;
 let busy = false;
-let solvedShown = false;   // « BRAVO ! » reste affiché jusqu'au prochain contrôle
+let solvedShown = false;
+let solved = false;        // vrai quand l'étape 8 a été jouée : le cube est résolu   // « BRAVO ! » reste affiché jusqu'au prochain contrôle
 
 // ─── Onomatopées (« CLIC ! » en fin d'étape, « BRAVO ! » à la fin) ──────
 function showSfx(kind) {
@@ -183,8 +184,13 @@ async function playStep(idx, durationMs = null, { sfx = true } = {}) {
   stageEl.classList.remove('is-turning');
   busy = false;
   setControlsDisabled(false);
-  if (idx === STEPS.length - 1) showSfx('solved');
-  else if (sfx) showSfx('step');
+  if (idx === STEPS.length - 1) {
+    solved = true;
+    showSfx('solved');
+  } else if (sfx) {
+    showSfx('step');
+  }
+  refreshNavButtons();
 }
 
 async function unplayStep(idx, durationMs = null) {
@@ -192,6 +198,7 @@ async function unplayStep(idx, durationMs = null) {
   if (!step.moves.length) return;
   busy = true;
   setControlsDisabled(true);
+  solved = false;
   stageEl.classList.add('is-turning');
   await cube.applySequence(invertSequence(step.moves), durationMs ?? moveDur());
   stageEl.classList.remove('is-turning');
@@ -202,6 +209,10 @@ async function unplayStep(idx, durationMs = null) {
 async function jumpToStep(targetIdx) {
   if (busy || targetIdx === currentStep) return;
   hideSfx();
+  // Un saut arrête la lecture auto : sinon la boucle de lecture rejouerait
+  // une étape par dessus le saut.
+  playing = false;
+  setPlayButtonText();
   if (targetIdx > currentStep) {
     for (let i = currentStep; i < targetIdx; i++) {
       await playStep(i, scrambleDur(), { sfx: false });
@@ -227,6 +238,8 @@ function setControlsDisabled(disabled) {
 function refreshNavButtons() {
   btnPrev.disabled = busy || currentStep === 0;
   btnNext.disabled = busy || currentStep >= STEPS.length - 1;
+  // Cube résolu : rejouer l'étape 8 le re-mélangerait. On passe par « Recommencer ».
+  btnPlay.disabled = solved && !playing;
 }
 
 function setPlayButtonText() {
@@ -238,10 +251,12 @@ function setPlayButtonText() {
 // ─── Lecture auto ────────────────────────────────────────────────────────
 async function startPlayback() {
   playing = true;
+  hideSfx();
   setPlayButtonText();
   while (playing && currentStep < STEPS.length) {
     await playStep(currentStep);
-    if (!playing) break;
+    // L'étape vient d'être jouée en entier (même si on a mis pause pendant) :
+    // on avance toujours l'interface pour rester d'accord avec le cube.
     if (currentStep < STEPS.length - 1) {
       currentStep++;
       renderStep(currentStep);
@@ -347,6 +362,7 @@ function reRenderAll() {
 function setupEventListeners() {
   btnPlay.addEventListener('click', () => {
     if (busy && !playing) return;
+    if (solved && !playing) return;
     if (playing) {
       playing = false;
       setPlayButtonText();
@@ -387,6 +403,7 @@ function setupEventListeners() {
     hideSfx();
     playing = false;
     setPlayButtonText();
+    solved = false;
     await cube.reset();
     if (currentView !== 'white') {
       await cube.setCameraView('white');
