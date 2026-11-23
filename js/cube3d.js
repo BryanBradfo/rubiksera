@@ -1,21 +1,34 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
 // ─── Palette des stickers du cube ───────────────────────────────────────
 // Convention : blanc = bas, jaune = haut, vert = avant, bleu = arrière,
 //              rouge = droite, orange = gauche.
+// Couleurs alignées sur la palette du site (jaune, rouge, bleu) ; vert,
+// orange et blanc restent ceux du cube. Synchro avec js/moveIcons.js.
 const STICKERS = {
-  U: 0xffd500,  // up    = jaune
+  U: 0xffd400,  // up    = jaune
   D: 0xf6f6f6,  // down  = blanc
-  R: 0xc41e3a,  // right = rouge
+  R: 0xe8332a,  // right = rouge
   L: 0xff7f1f,  // left  = orange
   F: 0x1bb55c,  // front = vert
-  B: 0x3b6df0,  // back  = bleu
+  B: 0x1f4fd8,  // back  = bleu
 };
-const PLASTIC = 0x101013;  // corps en plastique noir mat des cubies
+const PLASTIC = 0x1a1a1a;  // corps des cubies (l'encre du contour est plus noire)
+const INK = 0x0e0e0e;      // contour encré autour de chaque cubie
+const OUTLINE_SCALE = 1.07;
+
+// Ombrage « dessiné » : 3 tons francs au lieu d'un dégradé continu.
+function makeToonGradient() {
+  const tones = new Uint8Array([85, 85, 85, 255, 165, 165, 165, 255, 255, 255, 255, 255]);
+  const tex = new THREE.DataTexture(tones, 3, 1, THREE.RGBAFormat);
+  tex.minFilter = THREE.NearestFilter;
+  tex.magFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
 
 const PI_2 = Math.PI / 2;
 const EPS = 1e-4;
@@ -31,18 +44,25 @@ const FACE_PLACEMENT = {
   B: { axis: 'z', sign: -1, pos: [0, 0, -0.49], rot: [0, PI_2 * 2, 0] },
 };
 
-// Ombre de contact douce : disque radial sombre → transparent (teinte chaude).
+// Ombre portée en trame : une ellipse de points d'encre, comme en manga.
 function makeContactShadow() {
   const s = 256;
   const c = document.createElement('canvas');
   c.width = c.height = s;
   const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-  g.addColorStop(0.0, 'rgba(38, 30, 18, 0.55)');
-  g.addColorStop(0.45, 'rgba(38, 30, 18, 0.32)');
-  g.addColorStop(1.0, 'rgba(38, 30, 18, 0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, s, s);
+  ctx.fillStyle = '#0e0e0e';
+  const pitch = 7;
+  for (let y = pitch / 2; y < s; y += pitch) {
+    for (let x = pitch / 2; x < s; x += pitch) {
+      const d = Math.hypot(x - s / 2, y - s / 2) / (s / 2);
+      if (d >= 1) continue;
+      const r = 2.2 * (1 - d * d);
+      if (r < 0.4) continue;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -59,8 +79,8 @@ export function createCube3D(container) {
   //   - 'yellow': caméra en y POSITIF → on voit la face jaune (U) + rouge + vert.
   //               Utilisée à partir de l'étape 4 (« mettre la face blanche vers le bas »).
   const VIEWS = {
-    white:  new THREE.Vector3(6.2, -4.5, 6.2),
-    yellow: new THREE.Vector3(6.2,  4.5, 6.2),
+    white:  new THREE.Vector3(7.3, -5.3, 7.3),
+    yellow: new THREE.Vector3(7.3,  5.3, 7.3),
   };
 
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
@@ -70,46 +90,29 @@ export function createCube3D(container) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMapping = THREE.NoToneMapping;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.appendChild(renderer.domElement);
 
-  // ─── Éclairage photographique ───────────────────────────────────────
-  // Lumière d'environnement (IBL) générée depuis une "pièce" virtuelle :
-  // donne aux tuiles brillantes des reflets doux et réalistes.
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.4;
-
-  // Softbox : reflet doux et large sur les tuiles brillantes (highlight studio).
-  RectAreaLightUniformsLib.init();
-  const softbox = new THREE.RectAreaLight(0xffffff, 4.5, 6, 6);
-  softbox.position.set(3.5, 6.5, 6);
-  softbox.lookAt(0, 0, 0);
-  scene.add(softbox);
-
-  // Clé dominante très directionnelle → une face vive, les autres plus
-  // sombres : c'est ce modelé qui donne le relief "photographié".
-  const key = new THREE.DirectionalLight(0xfff6ea, 2.6);
-  key.position.set(6, 10, 5);
+  // ─── Éclairage « dessin » ────────────────────────────────────────────
+  // Une clé directionnelle découpe les 3 tons du toon ; l'hémisphère éclaire
+  // aussi le dessous, pour que la face blanche vue d'en bas (étapes 1 à 3)
+  // reste blanche et jamais noire.
+  const key = new THREE.DirectionalLight(0xffffff, 1.9);
+  key.position.set(7, 10, 3);
   scene.add(key);
-  // Ambiance hémisphérique : éclaire TOUTES les faces, y compris celle du
-  // dessous (la face blanche vue aux étapes 1-3) qui sinon resterait noire,
-  // car toutes les autres lumières viennent d'en haut.
-  const hemi = new THREE.HemisphereLight(0xfffaf0, 0xeae2d4, 0.85);
+  const under = new THREE.DirectionalLight(0xffffff, 0.75);
+  under.position.set(-4, -9, 6);
+  scene.add(under);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.7);
   scene.add(hemi);
-  // Petit fill latéral chaud pour adoucir les ombres.
-  const fill = new THREE.DirectionalLight(0xffe9d2, 0.2);
-  fill.position.set(-7, -2, -4);
-  scene.add(fill);
 
   // Ombre de contact (approximation douce) sous le cube. Visible seulement
   // quand la caméra est au-dessus (vue jaune) ; cachée en vue "blanche".
   const contactShadow = new THREE.Mesh(
     new THREE.PlaneGeometry(4.4, 4.4),
     new THREE.MeshBasicMaterial({
-      map: makeContactShadow(), transparent: true, opacity: 0.9,
+      map: makeContactShadow(), transparent: true, opacity: 0.55,
       depthWrite: false,
     })
   );
@@ -141,24 +144,20 @@ export function createCube3D(container) {
   // Tuile : carré arrondi bombé, posé sur une face (épaisseur en Z), légèrement
   // proéminent pour l'effet "sticker en relief".
   const tileGeom = new RoundedBoxGeometry(0.76, 0.76, 0.09, 4, 0.15);
-  const bodyMat = new THREE.MeshPhysicalMaterial({
-    color: PLASTIC, roughness: 0.55, metalness: 0,
-    clearcoat: 0.3, clearcoatRoughness: 0.5,
-  });
-  // Couleur de tuile légèrement désaturée + variation, pour éviter l'aplat
-  // "néon" trop parfait qui fait synthétique.
-  function tileColor(hex) {
-    const c = new THREE.Color(hex);
-    const hsl = {}; c.getHSL(hsl);
-    c.setHSL(hsl.h, hsl.s * 0.9, hsl.l * 0.96);
-    return c;
-  }
+  const gradientMap = makeToonGradient();
+  const bodyMat = new THREE.MeshToonMaterial({ color: PLASTIC, gradientMap });
+  // Coque inversée : même forme un peu plus grande, faces arrière seules,
+  // noire. Elle dessine le trait d'encre autour de chaque cubie.
+  const outlineMat = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
 
   for (let x = -1; x <= 1; x++) {
     for (let y = -1; y <= 1; y++) {
       for (let z = -1; z <= 1; z++) {
         const cubie = new THREE.Mesh(bodyGeom, bodyMat);
         cubie.position.set(x, y, z);
+        const outline = new THREE.Mesh(bodyGeom, outlineMat);
+        outline.scale.setScalar(OUTLINE_SCALE);
+        cubie.add(outline);
         cubeGroup.add(cubie);
         cubies.push(cubie);
 
@@ -173,13 +172,8 @@ export function createCube3D(container) {
 
         for (const f of faces) {
           const p = FACE_PLACEMENT[f];
-          const col = tileColor(STICKERS[f]);
-          const mat = new THREE.MeshPhysicalMaterial({
-            color: col, metalness: 0,
-            // légère variation de rugosité par tuile → reflets non uniformes
-            roughness: 0.2 + Math.random() * 0.08,
-            clearcoat: 1.0, clearcoatRoughness: 0.06, envMapIntensity: 0.7,
-          });
+          const col = new THREE.Color(STICKERS[f]);
+          const mat = new THREE.MeshToonMaterial({ color: col, gradientMap });
           const tile = new THREE.Mesh(tileGeom, mat);
           tile.position.set(...p.pos);
           tile.rotation.set(...p.rot);

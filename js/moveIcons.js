@@ -16,15 +16,17 @@
 
 import { t } from './i18n.js';
 
-// Couleurs réelles des stickers (synchro avec js/cube3d.js).
+// Couleurs des stickers (synchro avec STICKERS dans js/cube3d.js).
 const FACE_COLOR = {
-  U: '#ffd500', D: '#f6f6f6', R: '#c41e3a',
-  L: '#ff7f1f', F: '#1bb55c', B: '#3b6df0',
+  U: '#ffd400', D: '#f6f6f6', R: '#e8332a',
+  L: '#ff7f1f', F: '#1bb55c', B: '#1f4fd8',
 };
-const NEUTRAL    = '#d3cab5';  // stickers non concernés (assez foncé pour que le blanc ressorte)
-const STICKER_LN = '#2c2820';  // contour des stickers
-const ARROW_DARK = '#211d18';
-const ARROW_HALO = '#fffdf8';
+const NEUTRAL    = '#ffffff';  // stickers non concernés : papier blanc, encrés
+const STICKER_LN = '#0e0e0e';  // encre des contours
+const ARROW_DARK = '#0e0e0e';
+const ARROW_HALO = '#ffffff';
+// La face blanche (D) sur fond blanc : on la trame pour qu'elle se distingue.
+const D_FILL     = 'url(#mc-dots)';
 
 // Pour chaque face : l'axe tourné, le signe de la couche, et le signe de la
 // rotation 3D d'un quart de tour « simple » (convention identique à cube3d.js :
@@ -161,16 +163,22 @@ function cubeSvg(face, suffix) {
   let stickers = '';
   for (const f of ['F', 'R', 'U']) {
     for (const s of faceStickers(f)) {
-      const fill = inLayer(s, axis, layer) ? color : NEUTRAL;
+      const lit = inLayer(s, axis, layer);
+      const fill = lit ? (face === 'D' ? D_FILL : color) : NEUTRAL;
       const d = 'M ' + s.corners.map(c => fmt(project(...c))).join(' L ') + ' Z';
       stickers += `<path d="${d}" fill="${fill}" stroke="${STICKER_LN}"
-                     stroke-width="0.7" stroke-linejoin="round"/>`;
+                     stroke-width="1.3" stroke-linejoin="round"/>`;
     }
   }
 
   const arrow = rotationArrow(axis, layer, rotSign, half);
+  const defs = face === 'D'
+    ? `<defs><pattern id="mc-dots" width="2.4" height="2.4" patternUnits="userSpaceOnUse">
+         <rect width="2.4" height="2.4" fill="#f6f6f6"/><circle cx="1.2" cy="1.2" r="0.45" fill="#0e0e0e"/>
+       </pattern></defs>`
+    : '';
   return `<svg viewBox="0 0 64 64" class="move-card__cube-svg" aria-hidden="true">
-            ${stickers}${arrow}
+            ${defs}${stickers}${arrow}
           </svg>`;
 }
 
@@ -186,16 +194,14 @@ export function createMoveIcon(move) {
   const dirName = t(`moves.turns.${turnKey}`);
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'move-card';
+  wrapper.className = `move-card move-card--${turnKey}`;
   wrapper.setAttribute('role', 'listitem');
   wrapper.setAttribute('aria-label', `${faceName}, ${dirName} (${move})`);
   wrapper.innerHTML = `
     <span class="move-card__cube">${cubeSvg(face, suffix)}</span>
-    <span class="move-card__text">
-      <span class="move-card__face">${escapeHtml(faceName)}</span>
-      <span class="move-card__dir">${escapeHtml(dirName)}</span>
-    </span>
     <span class="move-card__badge">${escapeHtml(move)}</span>
+    <span class="move-card__face">${escapeHtml(faceName)}</span>
+    <span class="move-card__dir">${escapeHtml(dirName)}</span>
   `;
   return wrapper;
 }

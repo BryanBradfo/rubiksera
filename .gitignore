@@ -1,5 +1,6 @@
 # Screenshots & test artefacts
 *.png
+!assets/**/*.png
 .playwright-mcp/
 
 # Editor
@@ -27,3 +28,6 @@ CLAUDE.md
 # Build outputs (futurs)
 dist/
 build/
+
+# Brainstorm mockups (visual companion)
+.superpowers/

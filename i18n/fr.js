@@ -6,20 +6,34 @@ export default {
   langName: 'Français',
 
   ui: {
-    docTitle: "Résoudre un Rubik's cube · méthode Victor Colin",
-    title: "Résoudre un Rubik's cube",
-    subtitle: "Méthode débutant pas à pas · fiche de Victor Colin",
+    docTitle: "rubiksera, apprendre le Rubik's Cube en 8 étapes",
+    title: "rubiksera, apprendre le Rubik's Cube",
+    creditTag: "Méthode de Victor Colin",
+    chapterLabel: "Chapitre",
+    phases: {
+      p1: "La première couronne",
+      p2: "La deuxième couronne",
+      p3: "La face jaune",
+    },
     stepLabel: "Étape",
-    movesLabel: "Mouvements de cette étape",
-    movesHint: "Chaque carte fait tourner une face. Sa couleur est celle de cette face sur le cube.",
-    noMovesPlaceholder: "(aucun mouvement, pas de formule miracle, c'est à toi !)",
-    btnPrev: "◀ Précédent",
-    btnPlay: "▶ Lecture",
-    btnPause: "⏸ Pause",
-    btnNext: "Suivant ▶",
-    btnReset: "↻ Reset",
+    stepOf: "sur",
+    formulaLabel: "La formule",
+    dirLegend: {
+      cw: "Horaire",
+      ccw: "Anti horaire",
+      half: "Demi tour",
+    },
+    movesHint: "La couche qui tourne est en couleur, le trait sous la carte indique le sens.",
+    noMovesPlaceholder: "Pas de formule ici : à toi de jouer !",
+    btnPrev: "Précédent",
+    btnPlay: "Lecture",
+    btnPause: "Pause",
+    btnNext: "Suivant",
+    btnReset: "Recommencer",
     speedLabel: "Vitesse",
-    cubeHint: "Glisse-déposer pour faire pivoter le cube · Molette pour zoomer",
+    cubeHint: "Glisse pour tourner le cube, molette pour zoomer",
+    sfxStep: "CLIC !",
+    sfxSolved: "BRAVO !",
     creditLineHTML:
       "<strong>Méthode et fiche méthode</strong> par " +
       "<a href='https://youtu.be/Leml4U4D1r8' target='_blank' rel='noopener'>Victor Colin</a>. " +
@@ -60,6 +74,7 @@ export default {
   steps: [
     {
       title: "Faire une croix (sur la face blanche)",
+      highlight: "croix",
       body: `
         <p>Sur la face blanche (celle où le centre est blanc), tu dois construire une croix
         blanche <strong>en montant les arêtes qui ont du blanc (ne t'occupe pas des coins)</strong>.
@@ -71,6 +86,7 @@ export default {
     },
     {
       title: "Placer les arêtes de la croix aux bons endroits",
+      highlight: "arêtes",
       body: `
         <p>Dans la continuité de la croix, les arêtes doivent être de la même couleur que le centre de chaque face.
         Par exemple, l'arête <strong>blanc/rouge</strong> doit être placée sur la face rouge (et non sur la face bleue).</p>
@@ -92,6 +108,7 @@ export default {
     },
     {
       title: "Placer les coins de la première couronne",
+      highlight: "coins",
       body: `
         <p>Trouve sur la face du bas un coin qui a du blanc et place-le en dessous de l'emplacement où il doit aller.
         Par exemple, si tu as trouvé le coin <strong>BLANC / BLEU / ROUGE</strong>, tourne la face du bas
@@ -110,6 +127,7 @@ export default {
     },
     {
       title: "Faire la deuxième couronne",
+      highlight: "deuxième couronne",
       body: `
         <p>À partir de maintenant et jusqu'à la fin, <strong>mettre la face blanche vers le bas.</strong></p>
 
@@ -139,6 +157,7 @@ export default {
     },
     {
       title: "Faire une croix jaune",
+      highlight: "croix jaune",
       body: `
         <p><strong>Pour cette étape, la méthode expliquée ici est différente de la méthode montrée dans le tutoriel vidéo.</strong>
         Il s'agit de la <strong>SEULE</strong> étape où les explications sont différentes. Pour toutes les autres,
@@ -162,6 +181,7 @@ export default {
     },
     {
       title: "Placer les arêtes de la croix jaune aux bons endroits",
+      highlight: "arêtes",
       body: `
         <p>Faire <strong>EXACTEMENT pareil</strong> qu'à l'étape 2.</p>
         <p>Tourne la face du haut jusqu'à trouver deux arêtes bien placées,
@@ -171,6 +191,7 @@ export default {
     },
     {
       title: "Placer les 4 derniers coins aux bons endroits",
+      highlight: "4 derniers coins",
       body: `
         <p>L'objectif est que chaque coin soit <strong>au bon endroit</strong>. Par exemple, le coin
         <strong>JAUNE / VERT / ROUGE</strong> doit être placé entre les faces verte et rouge
@@ -194,6 +215,7 @@ export default {
     },
     {
       title: "Orienter les 4 derniers coins pour terminer le cube",
+      highlight: "Orienter",
       body: `
         <p><strong>Attention :</strong> si c'est une des premières fois que tu fais cette étape,
         il est fortement conseillé de regarder entièrement les explications données dans le tutoriel

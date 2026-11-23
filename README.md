@@ -1,4 +1,6 @@
-# rubiksera · Rubik's Cube, step by step
+# rubiksera, the Rubik's Cube step by step
+
+<p align="center"><img src="assets/brand/og.png" alt="rubiksera" width="720"></p>
 
 Interactive 3D Rubik's Cube visualization that walks through the **8 steps of
 Victor Colin's beginner method**, with synchronized text in French or English.
@@ -13,20 +15,26 @@ Victor Colin's beginner method**, with synchronized text in French or English.
 
 ## Features
 
-- 🧊 **Realistic 3D cube** (Three.js): rounded glossy cubies, studio lighting,
-  a soft contact shadow and a gentle idle rotation (drag to rotate, scroll to zoom)
-- 🎯 **3D move cards**: each move is a mini isometric cube with the turning layer
-  shown in its real colour and a rotation arrow, plus the face and direction in
-  plain language (clockwise / counter-clockwise / half turn). The compact notation
-  (`R2`, `F'`, ...) is kept as a small badge so you learn it without depending on it.
-- 🎨 **Light editorial design** (warm paper, serif display type, hairline structure)
-- 🎬 **Step-by-step playback** with play/pause/prev/next/timeline controls; the active
-  move card highlights and scrolls into view as the cube turns
-- 🎚 **Speed slider** (0.3× to 2×) with localStorage persistence
-- 🌍 **i18n** (FR / EN), auto-detected from browser language, switchable on the fly
-- 🤖 **Custom LBL solver** (`js/lblSolver.js`): each step's moves are
-  computed to **really do what the text says** (not just arbitrary moves)
-- 📸 **Camera flip** at step 4, exactly as the PDF says ("put white face down")
+- 📖 **A manga planche**: the whole tool is a comic page, with inked panels, paper
+  gutters, screentone and speed lines around the cube
+- 👧 **A teacher in a speech bubble**: the girl from the logo explains each step,
+  with Victor Colin's text kept word for word and one key word highlighted
+- 🧊 **Inked 3D cube** (Three.js): cel shaded in three flat tones, every cubie
+  outlined in ink, halftone shadow, gentle idle rotation (drag to rotate, scroll to zoom)
+- 🎨 **A colour code that teaches**: the 3 phases of the method each have a colour
+  (red for the first layer, blue for the second layer, yellow for the yellow face),
+  used for the chapter label, the highlighted word and the 8 page buttons
+- 🎯 **Move cards**: a mini isometric cube with the turning layer in colour and a
+  rotation arrow, the notation in big letters, the face and direction in plain words,
+  and a bar under the card for the direction (red clockwise, blue counter clockwise,
+  yellow half turn)
+- 💥 **Onomatopoeia**: "CLIC !" when a step ends, "BRAVO !" when the cube is solved
+- 🎬 **Step by step playback** with play, pause, previous, next and page buttons
+- 🎚 **Speed slider** (0.3x to 2x), saved in localStorage
+- 🌍 **i18n** (FR / EN), detected from the browser language, switchable on the fly
+- 🤖 **Custom LBL solver** (`js/lblSolver.js`): each step's moves really do what the text says
+- 📸 **Camera flip** at step 4, as the sheet says ("put the white face down")
+- 📱 **Mobile layout** with a sticky play bar, the cube always stays on screen
 
 ## How to run locally
 
@@ -39,13 +47,21 @@ Then open http://localhost:8000
 No build step, no dependencies. Pure HTML + CSS + ES modules. Three.js loaded
 from CDN via importmap.
 
+Checks (phase mapping, highlight words, copy rules) run with Node, no install needed:
+
+```bash
+node --test tests/*.test.mjs
+```
+
 ## Project structure
 
 ```
 .
 ├── index.html
 ├── assets/
-│   ├── favicon.svg           # 3x3 cube-face favicon (the 6 colours)
+│   ├── brand/                # Logo, teacher face crop, social preview image
+│   ├── favicon.png           # Favicon (the teacher's face)
+│   ├── apple-touch-icon.png
 │   └── rubiks.pdf            # Original methodology sheet by Victor Colin
 ├── css/
 │   └── style.css
@@ -55,13 +71,15 @@ from CDN via importmap.
 │   ├── moveIcons.js          # SVG generator for the 3D move cards
 │   ├── i18n.js               # Mini i18n engine
 │   ├── steps.js              # Step data (titles/bodies from i18n, moves precomputed)
+│   ├── phases.js             # Step to phase mapping + title highlight split
 │   ├── cubeEngine.js         # Facelet model + 18 move permutations (engine)
 │   └── lblSolver.js          # Layer-by-layer solver
 ├── i18n/
 │   ├── fr.js                 # French strings + 8 steps (faithful to PDF)
 │   └── en.js                 # English translation
-└── scripts/
-    └── precompute.mjs        # Node script to recompute move lists for a new scramble
+├── scripts/
+│   └── precompute.mjs        # Node script to recompute move lists for a new scramble
+└── tests/                    # node --test checks (phases, copy rules)
 ```
 
 ## Change the scramble

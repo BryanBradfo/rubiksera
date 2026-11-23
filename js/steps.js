@@ -11,6 +11,7 @@ export const STEPS = Array.from({ length: 8 }, (_, i) => ({
   number: i + 1,
   title: '',
   body: '',
+  highlight: '',
   moves: [],
 }));
 
@@ -21,6 +22,7 @@ export function syncStepsFromI18n() {
   for (let i = 0; i < STEPS.length && i < localized.length; i++) {
     STEPS[i].title = localized[i].title;
     STEPS[i].body = localized[i].body;
+    STEPS[i].highlight = localized[i].highlight;
   }
 }
 
