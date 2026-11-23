@@ -61,9 +61,11 @@ node --test tests/*.test.mjs
 ├── sitemap.xml               # Sitemap for search engines
 ├── robots.txt                # Crawl rules (everything allowed) + sitemap link
 ├── llms.txt                  # Plain summary of the site and the 8 steps for AI assistants
+├── favicon.ico               # Favicon 16/32/48 for browsers and search results
+├── site.webmanifest          # App name and icons for phones
 ├── assets/
 │   ├── brand/                # Logo, teacher face crop, social preview image
-│   ├── favicon.png           # Favicon (the teacher's face)
+│   ├── favicon.png           # Favicon (the teacher and her cube), plus icon-192/512
 │   ├── apple-touch-icon.png
 │   └── rubiks.pdf            # Original methodology sheet by Victor Colin
 ├── css/

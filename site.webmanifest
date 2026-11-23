@@ -1,0 +1,13 @@
+{
+  "name": "rubiksera",
+  "short_name": "rubiksera",
+  "description": "Apprendre le Rubik's Cube en 8 étapes avec la méthode de Victor Colin.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3EEE3",
+  "theme_color": "#F3EEE3",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
