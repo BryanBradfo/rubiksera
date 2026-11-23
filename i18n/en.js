@@ -6,20 +6,34 @@ export default {
   langName: 'English',
 
   ui: {
-    docTitle: "Solve a Rubik's cube · Victor Colin's method",
-    title: "Solve a Rubik's cube",
-    subtitle: "Beginner's method, step by step · Victor Colin's sheet",
+    docTitle: "rubiksera, learn the Rubik's Cube in 8 steps",
+    title: "rubiksera, learn the Rubik's Cube",
+    creditTag: "Victor Colin's method",
+    chapterLabel: "Chapter",
+    phases: {
+      p1: "The first layer",
+      p2: "The second layer",
+      p3: "The yellow face",
+    },
     stepLabel: "Step",
-    movesLabel: "Moves for this step",
-    movesHint: "Each card is a turn of one face. Its colour matches that face on the cube.",
-    noMovesPlaceholder: "(no moves, no magic formula, it's up to you!)",
-    btnPrev: "◀ Previous",
-    btnPlay: "▶ Play",
-    btnPause: "⏸ Pause",
-    btnNext: "Next ▶",
-    btnReset: "↻ Reset",
+    stepOf: "of",
+    formulaLabel: "The formula",
+    dirLegend: {
+      cw: "Clockwise",
+      ccw: "Counter clockwise",
+      half: "Half turn",
+    },
+    movesHint: "The turning layer is in colour, the bar under the card shows the direction.",
+    noMovesPlaceholder: "No formula here: your turn to play!",
+    btnPrev: "Previous",
+    btnPlay: "Play",
+    btnPause: "Pause",
+    btnNext: "Next",
+    btnReset: "Restart",
     speedLabel: "Speed",
-    cubeHint: "Drag to rotate the cube · Scroll to zoom",
+    cubeHint: "Drag to turn the cube, scroll to zoom",
+    sfxStep: "CLICK!",
+    sfxSolved: "SOLVED!",
     creditLineHTML:
       "<strong>Method and reference sheet</strong> by " +
       "<a href='https://youtu.be/Leml4U4D1r8' target='_blank' rel='noopener'>Victor Colin</a>. " +
@@ -59,6 +73,7 @@ export default {
   steps: [
     {
       title: "Make a cross (on the white face)",
+      highlight: "cross",
       body: `
         <p>On the white face (the one with the white centre), you need to build a white cross
         <strong>by bringing up the edges that have white on them (don't worry about the corners)</strong>.
@@ -70,6 +85,7 @@ export default {
     },
     {
       title: "Place the cross edges in the right spots",
+      highlight: "edges",
       body: `
         <p>Following on from the cross, the edges must match the colour of the centre of each face.
         For example, the <strong>white/red</strong> edge must be placed on the red face (and not on the blue face).</p>
@@ -91,6 +107,7 @@ export default {
     },
     {
       title: "Place the corners of the first layer",
+      highlight: "corners",
       body: `
         <p>Find a corner with white on the bottom face and position it below the slot where it should go.
         For example, if you found the <strong>WHITE / BLUE / RED</strong> corner, turn the bottom face
@@ -109,6 +126,7 @@ export default {
     },
     {
       title: "Solve the second layer",
+      highlight: "second layer",
       body: `
         <p>From now on and until the end, <strong>keep the white face on the bottom.</strong></p>
 
@@ -138,6 +156,7 @@ export default {
     },
     {
       title: "Make a yellow cross",
+      highlight: "yellow cross",
       body: `
         <p><strong>For this step, the method explained here is different from the one shown in the video tutorial.</strong>
         This is the <strong>ONLY</strong> step where the explanations differ. For all the others,
@@ -161,6 +180,7 @@ export default {
     },
     {
       title: "Place the yellow cross edges in the right spots",
+      highlight: "edges",
       body: `
         <p>Do <strong>EXACTLY THE SAME</strong> as in step 2.</p>
         <p>Turn the top face until you find two well-placed edges, then apply the formula.
@@ -170,6 +190,7 @@ export default {
     },
     {
       title: "Place the 4 last corners in the right spots",
+      highlight: "4 last corners",
       body: `
         <p>The goal is for each corner to be <strong>in the right spot</strong>. For example, the
         <strong>YELLOW / GREEN / RED</strong> corner must be placed between the green and red faces
@@ -193,6 +214,7 @@ export default {
     },
     {
       title: "Orient the 4 last corners to finish the cube",
+      highlight: "Orient",
       body: `
         <p><strong>Warning:</strong> if this is one of the first times you're doing this step,
         it is highly recommended to watch the entire explanation in the tutorial
