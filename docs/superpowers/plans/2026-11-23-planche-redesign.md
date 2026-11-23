@@ -48,7 +48,7 @@
   - `face.png`: crop the face and cube region (in the 2592 px source roughly x 1000 to 2050, y 700 to 1750, adjust by eye), resize 400x400.
   - `favicon.png` 32x32 and `apple-touch-icon.png` 180x180 from the face crop, on white.
   - `og.png` 1200x630: Papier background, logo on the right, "RUBIKSERA" left in Dela Gothic One if available locally, else render the text from a throwaway HTML page with Playwright and screenshot it. Keep each PNG under 300 KB (`-strip -quality 90`, or `pngquant` if present).
-- [ ] **Step 2: Update `<head>`**: favicon links to the two PNGs, `<meta name="description">`, Open Graph (`og:title`, `og:description`, `og:image` = `https://rubiksera.bryanbradfo.me/assets/brand/og.png`, `og:type` website) and `twitter:card` summary_large_image. Font link replaced by the three families of the Global Constraints. `<title>` is set by i18n (Task 2).
+- [ ] **Step 2: Update `<head>`**: favicon links to the two PNGs, `<meta name="description">`, Open Graph (`og:title`, `og:description`, `og:image` = `https://rubiksera.bradfo.me/assets/brand/og.png`, `og:type` website) and `twitter:card` summary_large_image. Font link replaced by the three families of the Global Constraints. `<title>` is set by i18n (Task 2).
 - [ ] **Step 3: Verify**: `git status --short assets` lists the new PNGs as untracked (not ignored); `ls -la assets/brand` shows sizes under 300 KB; Read `face.png` to check the crop.
 - [ ] **Step 4: Commit** `feat: add rubiksera brand assets and social metadata`
 
