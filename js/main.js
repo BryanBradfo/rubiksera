@@ -70,6 +70,7 @@ const bigNumEl = document.getElementById('step-big-num');
 const chapterNumEl = document.getElementById('chapter-num');
 const chapterNameEl = document.getElementById('chapter-name');
 const stageEl = document.getElementById('stage');
+const sfxEl = document.getElementById('sfx');
 const speedSlider = document.getElementById('speed-slider');
 const speedValueEl = document.getElementById('speed-value');
 const creditLineEl = document.getElementById('credit-line');
@@ -79,6 +80,23 @@ let cube;             // créé après i18n.init()
 let currentStep = 0;
 let playing = false;
 let busy = false;
+let solvedShown = false;   // « BRAVO ! » reste affiché jusqu'au prochain contrôle
+
+// ─── Onomatopées (« CLIC ! » en fin d'étape, « BRAVO ! » à la fin) ──────
+function showSfx(kind) {
+  const solved = kind === 'solved';
+  solvedShown = solved;
+  sfxEl.textContent = i18n.t(solved ? 'ui.sfxSolved' : 'ui.sfxStep');
+  sfxEl.classList.remove('is-on', 'is-solved');
+  void sfxEl.offsetWidth;   // relance l'animation même si elle vient de jouer
+  sfxEl.classList.add(solved ? 'is-solved' : 'is-on');
+}
+
+function hideSfx() {
+  solvedShown = false;
+  sfxEl.classList.remove('is-on', 'is-solved');
+  sfxEl.textContent = '';
+}
 
 // ─── Render de l'étape (bulle, formule, chapitre, pages) ─────────────────
 function renderTitle(step) {
@@ -142,11 +160,12 @@ function revealCard(card) {
 }
 
 // ─── Joue les moves d'une étape ──────────────────────────────────────────
-async function playStep(idx, durationMs = null) {
+async function playStep(idx, durationMs = null, { sfx = true } = {}) {
   const step = STEPS[idx];
   if (!step.moves.length) return;
   busy = true;
   setControlsDisabled(true);
+  stageEl.classList.add('is-turning');
   const tokens = movesListEl.children;
   const dur = durationMs ?? moveDur();
   await cube.applySequence(step.moves, dur, (i, _move) => {
@@ -161,8 +180,11 @@ async function playStep(idx, durationMs = null) {
     tok.classList.remove('current');
     tok.classList.add('done');
   }
+  stageEl.classList.remove('is-turning');
   busy = false;
   setControlsDisabled(false);
+  if (idx === STEPS.length - 1) showSfx('solved');
+  else if (sfx) showSfx('step');
 }
 
 async function unplayStep(idx, durationMs = null) {
@@ -170,16 +192,19 @@ async function unplayStep(idx, durationMs = null) {
   if (!step.moves.length) return;
   busy = true;
   setControlsDisabled(true);
+  stageEl.classList.add('is-turning');
   await cube.applySequence(invertSequence(step.moves), durationMs ?? moveDur());
+  stageEl.classList.remove('is-turning');
   busy = false;
   setControlsDisabled(false);
 }
 
 async function jumpToStep(targetIdx) {
   if (busy || targetIdx === currentStep) return;
+  hideSfx();
   if (targetIdx > currentStep) {
     for (let i = currentStep; i < targetIdx; i++) {
-      await playStep(i, scrambleDur());
+      await playStep(i, scrambleDur(), { sfx: false });
       await ensureViewForStep(i + 1);
     }
   } else {
@@ -347,6 +372,7 @@ function setupEventListeners() {
 
   btnPrev.addEventListener('click', async () => {
     if (busy || currentStep === 0) return;
+    hideSfx();
     playing = false;
     setPlayButtonText();
     currentStep--;
@@ -358,6 +384,7 @@ function setupEventListeners() {
 
   btnReset.addEventListener('click', async () => {
     if (busy) return;
+    hideSfx();
     playing = false;
     setPlayButtonText();
     await cube.reset();
@@ -390,5 +417,6 @@ function setupEventListeners() {
 
   document.addEventListener('langChanged', () => {
     reRenderAll();
+    if (solvedShown) sfxEl.textContent = i18n.t('ui.sfxSolved');
   });
 }

@@ -678,7 +678,7 @@ button { font: inherit; color: inherit; }
     background: linear-gradient(to right bottom, transparent calc(50% - 2px), var(--ink) calc(50% - 2px), var(--ink) calc(50% + 1px), transparent calc(50% + 1px));
     pointer-events: none;
   }
-  .big-num { right: 14px; bottom: 9%; }
+  .big-num { right: 14px; top: 12px; bottom: auto; font-size: 64px; }
   .cube-hint { bottom: 9%; max-width: 60%; }
 
   .page { min-height: 40px; border-bottom-width: 6px; font-size: 13px; }
