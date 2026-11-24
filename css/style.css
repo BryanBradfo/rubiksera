@@ -536,12 +536,10 @@ button { font: inherit; color: inherit; }
   align-items: stretch;
   gap: 10px;
 }
-/* Sur bureau, les boutons de la barre deviennent des éléments du dock pour
-   que les pages se glissent entre « suivant » et « recommencer ». */
-.transport { display: contents; }
-#btn-prev, #btn-play, #btn-next { order: 0; }
-.pages { order: 1; }
-.btn--reset { order: 2; }
+/* Sur bureau, la barre de lecture et les pages se suivent dans l'ordre du
+   DOM : précédent, lecture, suivant, recommencer, puis les 8 pages. L'ordre
+   au clavier est donc le même que l'ordre à l'écran. */
+.transport { display: flex; gap: 10px; }
 
 .btn {
   display: inline-flex;
@@ -718,6 +716,7 @@ button { font: inherit; color: inherit; }
     border-top: var(--line) solid var(--ink);
   }
   .btn { min-height: 48px; padding: 0 12px; }
+  .lang-btn { min-height: 44px; min-width: 44px; }
   .btn--play { flex: 1; min-width: 0; }
   .transport .btn:not(.btn--play) .btn__label {
     position: absolute;
@@ -730,6 +729,10 @@ button { font: inherit; color: inherit; }
 
   .postface { margin: var(--gutter) 16px 0; }
   body { padding-bottom: 0; }
+}
+
+@media (max-width: 400px) {
+  .step-body code { white-space: normal; }
 }
 
 @media (max-width: 560px) {

@@ -113,7 +113,9 @@ function renderTitle(step) {
   stepTitleEl.append(parts.before, mark, parts.after);
 }
 
-function renderStep(idx) {
+// langOnly : simple changement de langue, on garde la position de lecture
+// dans la bulle et dans la formule, sans rejouer l'animation d'entrée.
+function renderStep(idx, { langOnly = false } = {}) {
   const step = STEPS[idx];
   const phase = phaseOf(idx);
   document.body.dataset.phase = String(phase);
@@ -134,13 +136,15 @@ function renderStep(idx) {
   step.moves.forEach(m => {
     movesListEl.appendChild(createMoveIcon(m));
   });
-  movesListEl.scrollTo({ top: 0, left: 0 });
+  if (!langOnly) movesListEl.scrollTo({ top: 0, left: 0 });
 
   // Nouvelle étape : on relit la bulle depuis le haut, avec une petite entrée.
-  bubbleInnerEl.scrollTop = 0;
-  bubbleInnerEl.classList.remove('is-entering');
-  void bubbleInnerEl.offsetWidth;   // relance l'animation
-  bubbleInnerEl.classList.add('is-entering');
+  if (!langOnly) {
+    bubbleInnerEl.scrollTop = 0;
+    bubbleInnerEl.classList.remove('is-entering');
+    void bubbleInnerEl.offsetWidth;   // relance l'animation
+    bubbleInnerEl.classList.add('is-entering');
+  }
 
   [...pagesEl.children].forEach((page, i) => {
     page.classList.toggle('current', i === idx);
@@ -151,13 +155,16 @@ function renderStep(idx) {
   });
 }
 
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
 // Garde la carte en cours visible en ne faisant défiler QUE la liste des
 // mouvements (jamais la page : sur mobile, le cube doit rester à l'écran).
 function revealCard(card) {
   const list = movesListEl;
   const left = card.offsetLeft - (list.clientWidth - card.offsetWidth) / 2;
   const top = card.offsetTop - (list.clientHeight - card.offsetHeight) / 2;
-  list.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: 'smooth' });
+  const behavior = reducedMotion.matches ? 'auto' : 'smooth';
+  list.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior });
 }
 
 // ─── Joue les moves d'une étape ──────────────────────────────────────────
@@ -207,8 +214,9 @@ async function unplayStep(idx, durationMs = null) {
 }
 
 async function jumpToStep(targetIdx) {
-  if (busy || targetIdx === currentStep) return;
-  hideSfx();
+  if (busy) return;
+  hideSfx();   // un clic sur une page cache « BRAVO ! », même sur la page en cours
+  if (targetIdx === currentStep) return;
   // Un saut arrête la lecture auto : sinon la boucle de lecture rejouerait
   // une étape par dessus le saut.
   playing = false;
@@ -245,7 +253,6 @@ function refreshNavButtons() {
 function setPlayButtonText() {
   btnPlayLabel.textContent = playing ? i18n.t('ui.btnPause') : i18n.t('ui.btnPlay');
   btnPlay.classList.toggle('is-playing', playing);
-  btnPlay.setAttribute('aria-pressed', String(playing));
 }
 
 // ─── Lecture auto ────────────────────────────────────────────────────────
@@ -302,7 +309,8 @@ function renderUIText() {
   setPlayButtonText();
   // Met aussi à jour la valeur de vitesse affichée (juste le nombre, label séparé)
   speedValueEl.textContent = formatSpeed(speedMult);
-  pagesEl.setAttribute('aria-label', i18n.t('ui.stepLabel'));
+  pagesEl.setAttribute('aria-label', i18n.t('ui.stepsLabel'));
+  document.getElementById('brand').setAttribute('aria-label', i18n.t('ui.title'));
   // Active le bouton de langue courant
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === i18n.getLang());
@@ -315,9 +323,20 @@ function formatSpeed(mult) {
 
 // ─── Re-render complet après changement de langue ────────────────────────
 function reRenderAll() {
+  // Les cartes sont reconstruites dans la nouvelle langue : on recopie leur
+  // état (en cours, faite) pour ne pas perdre le fil pendant une lecture.
+  const cardStates = [...movesListEl.children].map(card => ({
+    current: card.classList.contains('current'),
+    done: card.classList.contains('done'),
+  }));
   syncStepsFromI18n();   // re-injecte les titres/bodies depuis i18n
   renderUIText();
-  renderStep(currentStep);
+  renderStep(currentStep, { langOnly: true });
+  [...movesListEl.children].forEach((card, i) => {
+    if (!cardStates[i]) return;
+    card.classList.toggle('current', cardStates[i].current);
+    card.classList.toggle('done', cardStates[i].done);
+  });
 }
 
 // ─── Boot ────────────────────────────────────────────────────────────────

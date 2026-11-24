@@ -26,7 +26,7 @@ const STICKER_LN = '#0e0e0e';  // encre des contours
 const ARROW_DARK = '#0e0e0e';
 const ARROW_HALO = '#ffffff';
 // La face blanche (D) sur fond blanc : on la trame pour qu'elle se distingue.
-const D_FILL     = 'url(#mc-dots)';
+let patternSeq = 0;           // id unique par carte (pas d'id répété dans la page)
 
 // Pour chaque face : l'axe tourné, le signe de la couche, et le signe de la
 // rotation 3D d'un quart de tour « simple » (convention identique à cube3d.js :
@@ -158,13 +158,14 @@ function cubeSvg(face, suffix) {
   const half = suffix === '2';
   const rotSign = suffix === "'" ? -rot : rot;   // ' inverse le sens
   const color = FACE_COLOR[face];
+  const dotsId = `mc-dots-${++patternSeq}`;
 
   // On dessine F puis R puis U (les 3 faces visibles ne se chevauchent pas).
   let stickers = '';
   for (const f of ['F', 'R', 'U']) {
     for (const s of faceStickers(f)) {
       const lit = inLayer(s, axis, layer);
-      const fill = lit ? (face === 'D' ? D_FILL : color) : NEUTRAL;
+      const fill = lit ? (face === 'D' ? `url(#${dotsId})` : color) : NEUTRAL;
       const d = 'M ' + s.corners.map(c => fmt(project(...c))).join(' L ') + ' Z';
       stickers += `<path d="${d}" fill="${fill}" stroke="${STICKER_LN}"
                      stroke-width="1.3" stroke-linejoin="round"/>`;
@@ -173,7 +174,7 @@ function cubeSvg(face, suffix) {
 
   const arrow = rotationArrow(axis, layer, rotSign, half);
   const defs = face === 'D'
-    ? `<defs><pattern id="mc-dots" width="2.4" height="2.4" patternUnits="userSpaceOnUse">
+    ? `<defs><pattern id="${dotsId}" width="2.4" height="2.4" patternUnits="userSpaceOnUse">
          <rect width="2.4" height="2.4" fill="#f6f6f6"/><circle cx="1.2" cy="1.2" r="0.45" fill="#0e0e0e"/>
        </pattern></defs>`
     : '';

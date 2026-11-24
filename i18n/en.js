@@ -16,6 +16,7 @@ export default {
       p3: "The yellow face",
     },
     stepLabel: "Step",
+    stepsLabel: "Steps",
     stepOf: "of",
     formulaLabel: "The formula",
     dirLegend: {
