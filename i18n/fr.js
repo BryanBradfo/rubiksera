@@ -16,6 +16,7 @@ export default {
       p3: "La face jaune",
     },
     stepLabel: "Étape",
+    stepsLabel: "Étapes",
     stepOf: "sur",
     formulaLabel: "La formule",
     dirLegend: {
